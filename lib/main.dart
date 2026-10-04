@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:flutter/material.dart';
 
-void main() async {
+import 'firebase_options.dart';
+import 'screens/splash_screen.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -16,32 +18,12 @@ class HomeFixApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HomeFix Mobile App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-      ),
-      home: const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.handyman, size: 64, color: Colors.teal),
-              SizedBox(height: 16),
-              Text(
-                'HomeFix Application',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Firebase Initialized Successfully!',
-                style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
+      title: 'HomeFix',
+      home: const SplashScreen(),
+      routes: {
+        '/login': (_) => const Placeholder(), // replace with your login screen
+      },
     );
   }
 }
