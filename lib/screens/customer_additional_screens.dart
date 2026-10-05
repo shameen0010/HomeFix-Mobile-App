@@ -99,7 +99,11 @@ class ServiceDetailsScreen extends ConsumerWidget {
           HfPrimaryButton(
             label: 'Book This Service',
             onPressed: () {
-              ref.read(draftProvider.notifier).set(DraftBooking(serviceId: service.id, serviceTitle: service.title, amount: service.price));
+              final draft = DraftBooking()
+                ..serviceId = service.id
+                ..serviceTitle = service.title
+                ..amount = service.price;
+              ref.read(draftProvider.notifier).set(draft);
               context.go('/c/search');
             },
           ),

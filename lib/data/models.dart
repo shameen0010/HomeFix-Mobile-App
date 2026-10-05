@@ -88,7 +88,8 @@ class ProviderProfile {
 // Booking status enum
 enum BookingStatus {
   pending,
-  confirmed,
+  accepted,
+  scheduled,
   inProgress,
   completed,
   cancelled,
@@ -104,6 +105,10 @@ class Booking {
   final BookingStatus status;
   final DateTime scheduledDate;
   final double amount;
+  final String? address;
+  final String? notes;
+  final List<String>? imageUrls;
+  final String? contactPhone;
 
   Booking({
     required this.id,
@@ -114,6 +119,10 @@ class Booking {
     required this.status,
     required this.scheduledDate,
     required this.amount,
+    this.address,
+    this.notes,
+    this.imageUrls,
+    this.contactPhone,
   });
 }
 
@@ -161,24 +170,32 @@ class ChatMessage {
 
 // Draft booking model (for booking flow)
 class DraftBooking {
+  String? serviceId;
   String? providerId;
   String? serviceTitle;
   double? amount;
   String? category;
   DateTime? scheduledDate;
   String? timeSlot;
+  String? address;
   String? notes;
+  String? contactPhone;
+  List<String>? imageUrls;
 
   DraftBooking();
 
   DraftBooking copy() {
     return DraftBooking()
+      ..serviceId = serviceId
       ..providerId = providerId
       ..serviceTitle = serviceTitle
       ..amount = amount
       ..category = category
       ..scheduledDate = scheduledDate
       ..timeSlot = timeSlot
-      ..notes = notes;
+      ..address = address
+      ..notes = notes
+      ..contactPhone = contactPhone
+      ..imageUrls = imageUrls;
   }
 }

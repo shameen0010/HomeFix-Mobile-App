@@ -8,6 +8,7 @@ import 'data/homefix_store.dart';
 import 'data/models.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screens.dart';
+import 'screens/booking_screens.dart';
 import 'screens/customer_additional_screens.dart';
 import 'screens/customer_screens.dart';
 import 'screens/onboarding_screen.dart';
@@ -60,7 +61,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'bookings',
-          builder: (context, state) => const CustomerShell(index: 2, child: Placeholder()),
+          builder: (context, state) => const CustomerShell(index: 2, child: CustomerBookingsScreen()),
         ),
         GoRoute(
           path: 'messages',
@@ -107,6 +108,32 @@ final router = GoRouter(
       builder: (context, state) {
         final serviceId = state.pathParameters['serviceId']!;
         return ServiceDetailsScreen(serviceId: serviceId);
+      },
+    ),
+    GoRoute(
+      path: '/booking-schedule',
+      builder: (context, state) => const BookingScheduleScreen(),
+    ),
+    GoRoute(
+      path: '/booking-confirmation',
+      builder: (context, state) => const BookingConfirmationScreen(),
+    ),
+    GoRoute(
+      path: '/booking-success',
+      builder: (context, state) => const BookingSuccessScreen(),
+    ),
+    GoRoute(
+      path: '/booking-checkout/:bookingId',
+      builder: (context, state) {
+        final bookingId = state.pathParameters['bookingId']!;
+        return BookingCheckoutScreen(bookingId: bookingId);
+      },
+    ),
+    GoRoute(
+      path: '/cancel-booking/:bookingId',
+      builder: (context, state) {
+        final bookingId = state.pathParameters['bookingId']!;
+        return CancelBookingScreen(bookingId: bookingId);
       },
     ),
   ],

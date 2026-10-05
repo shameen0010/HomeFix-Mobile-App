@@ -7,6 +7,7 @@ import '../../core/theme/hf_theme.dart';
 import '../../core/widgets/hf_widgets.dart';
 import '../../data/homefix_store.dart';
 import '../../data/models.dart';
+import 'booking_screens.dart';
 
 const customerNav = [
   HfNavItem(Icons.home_outlined, 'Home'),
@@ -766,7 +767,7 @@ class ProviderPublicProfile extends ConsumerWidget {
             const SizedBox(height: 16),
             HfPrimaryButton(
               label: 'Book this provider  →',
-              onPressed: () => context.push('/book/schedule'),
+              onPressed: () => context.push('/booking-schedule'),
             ),
           ],
         ),
@@ -778,6 +779,208 @@ class ProviderPublicProfile extends ConsumerWidget {
     return Expanded(
       child: HfCard(
         child: Column(children: [Text(n, style: const TextStyle(fontWeight: FontWeight.w800)), Text(l, style: const TextStyle(fontSize: 11, color: HfColors.muted))]),
+      ),
+    );
+  }
+}
+
+class CustomerBookingsScreen extends ConsumerStatefulWidget {
+  const CustomerBookingsScreen({super.key});
+
+  @override
+  ConsumerState<CustomerBookingsScreen> createState() => _CustomerBookingsScreenState();
+}
+
+class _CustomerBookingsScreenState extends ConsumerState<CustomerBookingsScreen> {
+  int _selectedTab = 0;
+  final List<String> _tabs = ['Upcoming', 'Active', 'Completed', 'Cancelled'];
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(homefixStoreProvider);
+    final bookings = state.bookings.where((b) => b.customerId == state.session?.id).toList();
+
+    return SafeArea(
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const HfBrandMark(compact: true),
+                const Spacer(),
+                CircleAvatar(
+                  backgroundColor: HfColors.primary,
+                  radius: 20,
+                  child: const Icon(Icons.person, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          // Title
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('My Bookings', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                const Text('Manage your service bookings', style: TextStyle(color: HfColors.muted, fontSize: 14)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Tabs
+          SizedBox(
+            height: 40,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _tabs.length,
+              itemBuilder: (context, index) {
+                final isSelected = _selectedTab == index;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: HfPill(
+                    label: _tabs[index],
+                    selected: isSelected,
+                    onTap: () => setState(() => _selectedTab = index),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Booking list
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                if (bookings.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.calendar_today, size: 64, color: HfColors.muted),
+                        const SizedBox(height: 16),
+                        Text('No bookings yet', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 8),
+                        const Text('Book your first service to get started', style: TextStyle(color: HfColors.muted)),
+                        const SizedBox(height: 16),
+                        HfPrimaryButton(
+                          label: 'Book a Service',
+                          onPressed: () => context.go('/c/search'),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  for (final booking in bookings) _BookingCard(context, ref, booking),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+          // Bottom navigation
+          HfBottomNav(
+            items: customerNav,
+            index: 2,
+            onTap: (i) {
+              context.go(['/c/home', '/c/search', '/c/bookings', '/c/messages', '/c/profile'][i]);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _BookingCard(BuildContext context, WidgetRef ref, Booking booking) {
+    final statusColor = switch (booking.status) {
+      BookingStatus.pending => HfColors.orange,
+      BookingStatus.accepted => HfColors.info,
+      BookingStatus.scheduled => HfColors.primary,
+      BookingStatus.inProgress => HfColors.success,
+      BookingStatus.completed => HfColors.grey,
+      BookingStatus.cancelled => HfColors.danger,
+    };
+
+    final statusLabel = switch (booking.status) {
+      BookingStatus.pending => 'PENDING',
+      BookingStatus.accepted => 'ACCEPTED',
+      BookingStatus.scheduled => 'SCHEDULED',
+      BookingStatus.inProgress => 'IN PROGRESS',
+      BookingStatus.completed => 'COMPLETED',
+      BookingStatus.cancelled => 'CANCELLED',
+    };
+
+    return HfCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: HfColors.primarySoft,
+                radius: 28,
+                child: const Icon(Icons.home_repair_service_outlined, color: HfColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(booking.serviceTitle, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text('David Smith', style: const TextStyle(color: HfColors.muted, fontSize: 12)),
+                  ],
+                ),
+              ),
+              HfBadge(label: statusLabel, tone: BadgeTone.orange),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.calendar_today, size: 16, color: HfColors.muted),
+              const SizedBox(width: 4),
+              Text(booking.scheduledLabel, style: const TextStyle(fontSize: 12, color: HfColors.muted)),
+              const Spacer(),
+              Text('Rs. ${booking.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: HfSoftButton(
+                  label: 'View Details',
+                  onPressed: () {
+                    context.push('/booking-checkout/${booking.id}');
+                  },
+                ),
+              ),
+              if (booking.status == BookingStatus.pending || booking.status == BookingStatus.accepted) ...[
+                const SizedBox(width: 8),
+                HfSoftButton(
+                  label: 'Cancel',
+                  color: HfColors.danger.withValues(alpha: 0.1),
+                  foreground: HfColors.danger,
+                  onPressed: () {
+                    context.push('/cancel-booking/${booking.id}');
+                  },
+                ),
+              ],
+            ],
+          ),
+          if (booking.status == BookingStatus.inProgress || booking.status == BookingStatus.scheduled) ...[
+            const SizedBox(height: 8),
+            HfPrimaryButton(
+              label: 'Track Status',
+              onPressed: () {
+                context.push('/booking-checkout/${booking.id}');
+              },
+            ),
+          ],
+        ],
       ),
     );
   }

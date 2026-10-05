@@ -178,6 +178,8 @@ class HomefixStore extends StateNotifier<HomefixState> {
         status: BookingStatus.inProgress,
         scheduledDate: DateTime.now(),
         amount: 2500,
+        address: '123 Main St, Nugegoda',
+        contactPhone: '+94 77 123 4567',
       ),
       Booking(
         id: 'booking2',
@@ -188,6 +190,8 @@ class HomefixStore extends StateNotifier<HomefixState> {
         status: BookingStatus.completed,
         scheduledDate: DateTime.now().subtract(const Duration(days: 1)),
         amount: 1800,
+        address: '45 Oak Avenue, Colombo',
+        contactPhone: '+94 77 123 4567',
       ),
     ];
 
@@ -377,6 +381,37 @@ class HomefixStore extends StateNotifier<HomefixState> {
 
   void completeOnboarding() {
     state = state.copyWith(onboardingDone: true);
+  }
+
+  void createBooking(Booking booking) {
+    state = state.copyWith(bookings: [...state.bookings, booking]);
+  }
+
+  void updateBookingStatus(String bookingId, BookingStatus newStatus) {
+    final updatedBookings = state.bookings.map((b) {
+      if (b.id == bookingId) {
+        return Booking(
+          id: b.id,
+          customerId: b.customerId,
+          providerId: b.providerId,
+          serviceTitle: b.serviceTitle,
+          scheduledLabel: b.scheduledLabel,
+          status: newStatus,
+          scheduledDate: b.scheduledDate,
+          amount: b.amount,
+          address: b.address,
+          notes: b.notes,
+          imageUrls: b.imageUrls,
+          contactPhone: b.contactPhone,
+        );
+      }
+      return b;
+    }).toList();
+    state = state.copyWith(bookings: updatedBookings);
+  }
+
+  void cancelBooking(String bookingId) {
+    updateBookingStatus(bookingId, BookingStatus.cancelled);
   }
 }
 
