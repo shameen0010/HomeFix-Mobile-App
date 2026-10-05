@@ -1,247 +1,106 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'onboarding_screen.dart';
 
-class SplashScreen extends StatefulWidget {
+import '../core/theme/hf_theme.dart';
+import '../core/widgets/hf_widgets.dart';
+import '../data/homefix_store.dart';
+import '../data/models.dart';
+import '../main.dart';
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  Timer? _timer;
-
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(seconds: 3), () {
+    Future<void>.delayed(const Duration(milliseconds: 1600), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 500),
-          pageBuilder: (_, _, _) => const OnboardingScreen(),
-          transitionsBuilder: (_, anim, _, child) =>
-              FadeTransition(opacity: anim, child: child),
-        ),
-      );
+      final state = ref.read(homefixStoreProvider);
+      if (state.session != null) {
+        context.go(homeFor(state.session!.role));
+      } else if (state.onboardingDone) {
+        context.go('/login');
+      } else {
+        context.go('/onboarding');
+      }
     });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: Container(
+      body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFEAF2FF), Color(0xFFF6F8FF), Color(0xFFFFF6EC)],
+            colors: [Color(0xFFEAF6FB), Color(0xFFFDF8F2), Colors.white],
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Top chips
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              children: [
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Pill(
-                      text: 'CERTIFIED NETWORK',
-                      bg: AppColors.chipBg,
-                      fg: AppColors.primary,
-                      size: 9,
-                      bold: true,
-                    ),
-                    Pill(
-                      icon: Icons.verified_outlined,
-                      text: '100% Vetted',
-                      size: 10,
-                    ),
+                    const HfPill(label: 'CERTIFIED NETWORK', icon: Icons.circle, selected: false),
+                    HfPill(label: '100% Vetted', icon: Icons.verified_outlined, color: HfColors.peach),
                   ],
                 ),
-              ),
-
-              // Center logo block
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(26),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [Color(0xFF1B8FB5), Color(0xFF0B5F7A)],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.35),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(Icons.home_rounded,
-                                size: 56, color: Colors.white),
-                          ),
-                          Positioned(
-                            right: -8,
-                            bottom: -8,
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: AppColors.orange,
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const Icon(Icons.bolt,
-                                  size: 18, color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'HomeFix',
-                            style: GoogleFonts.poppins(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.dark,
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(left: 4, bottom: 14),
-                            child: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: AppColors.orange,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Reliable Home Services, Just a Booking Away',
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: AppColors.grey),
-                      ),
-                      const SizedBox(height: 22),
-                      const Pill(
-                        icon: Icons.shield_outlined,
-                        text: 'Care & Comfort Guaranteed',
-                        size: 12,
-                      ),
+                const Spacer(),
+                const HfLogo(size: 92),
+                const SizedBox(height: 16),
+                Text.rich(
+                  TextSpan(
+                    text: 'HomeFix',
+                    style: GoogleFonts.inter(fontSize: 34, fontWeight: FontWeight.w800, color: HfColors.navy),
+                    children: const [
+                      TextSpan(text: ' •', style: TextStyle(color: HfColors.gold, fontSize: 22)),
                     ],
                   ),
                 ),
-              ),
-
-              // Bottom section
-              Text(
-                'EVERYDAY SOLUTIONS',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.grey,
+                const SizedBox(height: 8),
+                const Text(
+                  'Reliable Home Services, Just a Booking Away',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: HfColors.muted),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Wrap(
+                const SizedBox(height: 16),
+                const HfPill(label: 'Care & Comfort Guaranteed', icon: Icons.verified_user_outlined),
+                const Spacer(),
+                const Text('EVERYDAY SOLUTIONS', style: TextStyle(color: HfColors.muted, fontSize: 11, letterSpacing: 1.4)),
+                const SizedBox(height: 12),
+                const Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _ServiceChip(Icons.water_drop_outlined, 'Plumbing'),
-                    _ServiceChip(Icons.bolt, 'Electrical'),
-                    _ServiceChip(Icons.cleaning_services_outlined, 'Cleaning'),
-                    _ServiceChip(Icons.build_outlined, 'Repairs'),
-                    _ServiceChip(Icons.format_paint_outlined, 'Painting'),
+                    HfPill(label: 'Plumbing', icon: Icons.plumbing),
+                    HfPill(label: 'Electrical', icon: Icons.bolt_outlined),
+                    HfPill(label: 'Cleaning', icon: Icons.cleaning_services_outlined),
+                    HfPill(label: 'Repairs', icon: Icons.build_outlined),
+                    HfPill(label: 'Painting', icon: Icons.format_paint_outlined),
                   ],
                 ),
-              ),
-              const SizedBox(height: 28),
-
-              // Animated progress bar
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(seconds: 3),
-                builder: (_, v, _) => ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: SizedBox(
-                    width: 140,
-                    height: 4,
-                    child: LinearProgressIndicator(
-                      value: v,
-                      backgroundColor: AppColors.chipBg,
-                      valueColor:
-                          const AlwaysStoppedAnimation(AppColors.primary),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.circle, size: 6, color: AppColors.primary),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Opening your home dashboard...',
-                    style: GoogleFonts.poppins(
-                        fontSize: 10, color: AppColors.grey),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-            ],
+                const SizedBox(height: 28),
+                Container(width: 86, height: 5, decoration: BoxDecoration(color: HfColors.primary, borderRadius: BorderRadius.circular(8))),
+                const SizedBox(height: 12),
+                const Text('Opening your home dashboard...', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class _ServiceChip extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _ServiceChip(this.icon, this.text);
-
-  @override
-  Widget build(BuildContext context) => Pill(
-        icon: icon,
-        text: text,
-        bg: AppColors.chipBg,
-        size: 11,
-      );
 }

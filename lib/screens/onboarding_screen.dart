@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 class AppColors {
   static const primary = Color(0xFF11768F);
@@ -113,8 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool get _isLast => _index == _pages.length - 1;
 
   void _goLogin() {
-    // TODO: replace with your login route / screen
-    Navigator.of(context).pushReplacementNamed('/login');
+    context.go('/login');
   }
 
   void _next() {
