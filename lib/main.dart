@@ -136,6 +136,26 @@ final router = GoRouter(
         return CancelBookingScreen(bookingId: bookingId);
       },
     ),
+    GoRoute(
+      path: '/emergency',
+      builder: (context, state) => const EmergencyServiceSelectionScreen(),
+    ),
+    GoRoute(
+      path: '/emergency-details',
+      builder: (context, state) => const EmergencyDetailsScreen(),
+    ),
+    GoRoute(
+      path: '/emergency-providers',
+      builder: (context, state) => const EmergencyProvidersScreen(),
+    ),
+    GoRoute(
+      path: '/emergency-confirm',
+      builder: (context, state) => const EmergencyConfirmScreen(),
+    ),
+    GoRoute(
+      path: '/emergency-status',
+      builder: (context, state) => const EmergencyStatusScreen(),
+    ),
   ],
 );
 

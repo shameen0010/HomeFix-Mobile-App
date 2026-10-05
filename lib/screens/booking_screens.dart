@@ -16,6 +16,1075 @@ const customerNav = [
   HfNavItem(Icons.person_outline_rounded, 'Profile'),
 ];
 
+// ==================== EMERGENCY BOOKING SCREENS ====================
+
+class EmergencyServiceSelectionScreen extends ConsumerStatefulWidget {
+  const EmergencyServiceSelectionScreen({super.key});
+
+  @override
+  ConsumerState<EmergencyServiceSelectionScreen> createState() => _EmergencyServiceSelectionScreenState();
+}
+
+class _EmergencyServiceSelectionScreenState extends ConsumerState<EmergencyServiceSelectionScreen> {
+  String? _selectedService;
+
+  final List<Map<String, dynamic>> _services = [
+    {
+      'title': 'Emergency Plumbing',
+      'description': 'Burst pipes, severe leaks, water shutoff failure, overflowing drains',
+      'tags': <String>['Avg. response 15 min', 'Certified Techs'],
+      'icon': Icons.plumbing,
+    },
+    {
+      'title': 'Emergency Electrical',
+      'description': 'Power outage, sparking outlet, breaker failure, burning wire odor',
+      'tags': <String>['Critical safety hazard', 'Licensed Electrician'],
+      'icon': Icons.electrical_services,
+    },
+    {
+      'title': 'Appliance Repair',
+      'description': 'Refrigerator cooling failure, gas oven leak, urgent breakdown',
+      'tags': <String>['Same-day visits', 'All Major Brands'],
+      'icon': Icons.kitchen,
+    },
+    {
+      'title': 'Other Home Emergency',
+      'description': 'Door lockout, urgent structural issue, storm leak, broken window',
+      'tags': <String>[],
+      'icon': Icons.home_repair_service,
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const HfBrandMark(compact: true),
+                  const SizedBox(width: 8),
+                  const HfBadge(label: 'URGENT', tone: BadgeTone.orange),
+                  const Spacer(),
+                  CircleAvatar(
+                    backgroundColor: HfColors.primary,
+                    radius: 20,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            // Progress indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('STEP 1 OF 4 • Service Type', style: const TextStyle(fontSize: 11, color: HfColors.muted, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(value: 0.25, backgroundColor: HfColors.border, color: HfColors.primary),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Title
+                  const HfBadge(label: 'FAST-TRACK REQUEST', tone: BadgeTone.orange),
+                  const SizedBox(height: 8),
+                  Text('Emergency Booking', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 8),
+                  const Text('What help do you need right now?', style: TextStyle(color: HfColors.muted)),
+                  const SizedBox(height: 24),
+                  
+                  // Service cards
+                  ..._services.map((service) {
+                    final isSelected = _selectedService == service['title'];
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedService = service['title']),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? HfColors.primary : HfColors.border,
+                            width: isSelected ? 2 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: isSelected ? HfColors.primarySoft : HfColors.field,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(service['icon'], color: isSelected ? HfColors.primary : HfColors.muted),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(service['title'], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                                  const SizedBox(height: 4),
+                                  Text(service['description'], style: const TextStyle(color: HfColors.muted, fontSize: 12)),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      for (var tag in service['tags'] as List)
+                                        HfPill(label: tag as String, selected: false),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check_circle, color: HfColors.primary, size: 24),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 24),
+                  
+                  // Trust indicators
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _TrustIcon(Icons.verified_user, 'Vetted Pros'),
+                      _TrustIcon(Icons.attach_money, 'Fixed Pricing'),
+                      _TrustIcon(Icons.shield, 'Covered'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Continue button
+                  HfPrimaryButton(
+                    label: 'Continue →',
+                    onPressed: () {
+                      if (_selectedService != null) {
+                        context.push('/emergency-details');
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('No prepayment required to place urgent request', style: TextStyle(color: HfColors.muted, fontSize: 12), textAlign: TextAlign.center),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _TrustIcon(IconData icon, String label) {
+    return Column(
+      children: [
+        Icon(icon, color: HfColors.primary, size: 24),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 11, color: HfColors.muted)),
+      ],
+    );
+  }
+}
+
+class EmergencyDetailsScreen extends ConsumerStatefulWidget {
+  const EmergencyDetailsScreen({super.key});
+
+  @override
+  ConsumerState<EmergencyDetailsScreen> createState() => _EmergencyDetailsScreenState();
+}
+
+class _EmergencyDetailsScreenState extends ConsumerState<EmergencyDetailsScreen> {
+  final _addressController = TextEditingController();
+  final _areaController = TextEditingController();
+  final _zipController = TextEditingController();
+  final _unitController = TextEditingController();
+  final _descriptionController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back)),
+                  const Spacer(),
+                  CircleAvatar(
+                    backgroundColor: HfColors.primary,
+                    radius: 20,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            // Progress indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Emergency Details • 24/7 Priority Response', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  Text('STEP 2 OF 4', style: const TextStyle(fontSize: 11, color: HfColors.muted, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text('Location & Issue', style: const TextStyle(fontSize: 12, color: HfColors.muted)),
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(value: 0.5, backgroundColor: HfColors.border, color: HfColors.primary),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Active banner
+                  HfCard(
+                    color: HfColors.primarySoft,
+                    child: Row(
+                      children: [
+                        const HfBadge(label: 'Active Emergency: Emergency Plumbing', tone: BadgeTone.orange),
+                        const Spacer(),
+                        TextButton(onPressed: () {}, child: const Text('Change')),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Warning alert
+                  HfCard(
+                    color: HfColors.peach.withValues(alpha: 0.3),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber, color: HfColors.orange),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Rapid Dispatch Alert', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text('A local technician will review your address and respond immediately upon submission.', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Address fields
+                  HfField(
+                    label: 'Service Address*',
+                    hint: 'Enter your service address e.g. 742 Evergreen',
+                    icon: Icons.location_on,
+                    controller: _addressController,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: HfField(
+                          label: 'Area / City*',
+                          hint: 'Brooklyn',
+                          icon: Icons.location_city,
+                          controller: _areaController,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: HfField(
+                          label: 'Neighborhood or Zip',
+                          hint: '11201',
+                          icon: Icons.map,
+                          controller: _zipController,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  HfField(
+                    label: 'Apartment / Unit / Floor (Optional)',
+                    hint: 'Apt 4B',
+                    icon: Icons.apartment,
+                    controller: _unitController,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Problem description
+                  HfField(
+                    label: 'Describe the Problem*',
+                    hint: 'Be specific about the issue...',
+                    icon: Icons.description,
+                    controller: _descriptionController,
+                    maxLines: 4,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Add photo
+                  HfCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Add Photo (Optional)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: HfColors.field,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: HfColors.border, style: BorderStyle.solid),
+                          ),
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.camera_alt_outlined, color: HfColors.muted, size: 32),
+                                SizedBox(height: 8),
+                                Text('Tap to take or upload a photo', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                                Text('(JPEG or PNG up to 10MB)', style: TextStyle(color: HfColors.muted, fontSize: 10)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Privacy notice
+                  HfCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.security, color: HfColors.primary, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('Your address is securely transmitted only to assigned emergency technicians.', style: TextStyle(color: HfColors.muted, fontSize: 11)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Find providers button
+                  HfPrimaryButton(
+                    label: 'Find Available Providers →',
+                    onPressed: () {
+                      context.push('/emergency-providers');
+                    },
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EmergencyProvidersScreen extends ConsumerWidget {
+  const EmergencyProvidersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back)),
+                  const Spacer(),
+                  CircleAvatar(
+                    backgroundColor: HfColors.primary,
+                    radius: 20,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            // Progress indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Select Dispatch Tier • 24/7 Priority Response', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  Text('STEP 3 OF 4', style: const TextStyle(fontSize: 11, color: HfColors.muted, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(value: 0.75, backgroundColor: HfColors.border, color: HfColors.primary),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const Text('Available Providers', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                  const SizedBox(height: 4),
+                  const Text('Choose a provider who is available for your emergency', style: TextStyle(color: HfColors.muted)),
+                  const SizedBox(height: 8),
+                  const HfBadge(label: 'Emergency Plumbing - 3 certified pros on standby', tone: BadgeTone.orange),
+                  const SizedBox(height: 16),
+                  
+                  // Provider cards
+                  _ProviderCard(
+                    context,
+                    'Marcus Vance',
+                    'Master Plumber & Emergency Pipe Specialist',
+                    '4.9',
+                    '125',
+                    '11 Yrs Exp',
+                    true,
+                    '\$55.00',
+                    'Brooklyn & Queens Service Area',
+                    ['Available Now • Fast Dispatch'],
+                  ),
+                  const SizedBox(height: 12),
+                  _ProviderCard(
+                    context,
+                    'David Miller',
+                    'Licensed Master Plumber',
+                    '4.8',
+                    '142',
+                    '7 Yrs Exp',
+                    false,
+                    '\$55.00',
+                    'Brooklyn & Downtown Area',
+                    ['Available Now'],
+                  ),
+                  const SizedBox(height: 12),
+                  _ProviderCard(
+                    context,
+                    'Arthur Pendelton',
+                    'Residential Plumbing & Drain Pro',
+                    '4.8',
+                    '89',
+                    '9 Yrs Exp',
+                    false,
+                    '\$48.00',
+                    '',
+                    ['Available Now'],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Footer guarantee
+                  HfCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.shield, color: HfColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('HomeFix Emergency Guarantee', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text('Licensed, insured & background-checked professionals', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ProviderCard(
+    BuildContext context,
+    String name,
+    String subtitle,
+    String rating,
+    String reviews,
+    String exp,
+    bool recommended,
+    String diagnostic,
+    String area,
+    List<String> badges,
+  ) {
+    return HfCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: HfColors.primarySoft,
+                child: const Icon(Icons.person, color: HfColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: const TextStyle(color: HfColors.muted, fontSize: 12)),
+                  ],
+                ),
+              ),
+              if (recommended) const HfBadge(label: 'Recommended', tone: BadgeTone.orange),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.star, color: HfColors.gold, size: 16),
+              const SizedBox(width: 4),
+              Text('$rating ($reviews) | $exp', style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (var badge in badges)
+                HfPill(label: badge, selected: false),
+              if (area.isNotEmpty) HfPill(label: area, selected: false),
+            ],
+          ),
+          const SizedBox(height: 8),
+          HfPill(label: 'Diagnostic: $diagnostic', selected: false),
+          const SizedBox(height: 12),
+          HfPrimaryButton(
+            label: 'Request Service →',
+            onPressed: () {
+              context.push('/emergency-confirm');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EmergencyConfirmScreen extends ConsumerWidget {
+  const EmergencyConfirmScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back)),
+                  const Spacer(),
+                  CircleAvatar(
+                    backgroundColor: HfColors.primary,
+                    radius: 20,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            // Progress indicator
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Review & Confirm • 24/7 Priority Response', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  Text('STEP 4 OF 4', style: const TextStyle(fontSize: 11, color: HfColors.muted, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  const LinearProgressIndicator(value: 1.0, backgroundColor: HfColors.border, color: HfColors.primary),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const Text('Confirm Emergency Booking', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 24)),
+                  const SizedBox(height: 16),
+                  
+                  // Notice card
+                  HfCard(
+                    color: HfColors.primarySoft,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: HfColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('Instant Dispatch Notice - The provider will be notified about your emergency request immediately upon confirmation.', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Service card
+                  HfCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.plumbing, color: HfColors.primary),
+                            const SizedBox(width: 8),
+                            const Expanded(child: Text('EMERGENCY SERVICE: Emergency Plumbing', style: TextStyle(fontWeight: FontWeight.w700))),
+                            const HfBadge(label: 'Urgent Leak', tone: BadgeTone.orange),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: HfColors.primarySoft,
+                              child: const Icon(Icons.person, color: HfColors.primary),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Marcus Vance', style: TextStyle(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  const Text('Master Plumber • 11 yrs exp', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.star, color: HfColors.gold, size: 16),
+                                      const SizedBox(width: 4),
+                                      const Text('4.9', style: TextStyle(fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Text('Technician Status', style: TextStyle(fontSize: 12, color: HfColors.muted)),
+                            const Spacer(),
+                            const HfBadge(label: 'Available Now (Priority Queue)', tone: BadgeTone.orange),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Service destination
+                  HfCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, color: HfColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Service Destination', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              const Text('742 Evergreen Terrace, Apt 4B, Brooklyn, NY 11201', style: TextStyle(fontSize: 14)),
+                              const SizedBox(height: 4),
+                              const HfBadge(label: 'Manual Entry', tone: BadgeTone.teal),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Problem description
+                  HfCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.description, color: HfColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Problem Description', style: TextStyle(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              const Text('Kitchen sink supply line burst under cabinet. Water spraying continuously. Main valve closed temporarily.', style: TextStyle(fontSize: 12, color: HfColors.muted)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Estimated diagnostic fee
+                  HfCard(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Estimated Diagnostic Fee', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text('Cash / Direct settlement on-site', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        const Text('\$55.00', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Payment terms
+                  HfCard(
+                    color: HfColors.primarySoft,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lock, color: HfColors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('No Upfront Online Payment - Pay your technician directly via cash or approved settlement after work is completed.', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Buttons
+                  HfPrimaryButton(
+                    label: 'Confirm Emergency Booking *',
+                    onPressed: () {
+                      context.push('/emergency-status');
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Cancel Request'),
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EmergencyStatusScreen extends ConsumerWidget {
+  const EmergencyStatusScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back)),
+                  const Spacer(),
+                  CircleAvatar(
+                    backgroundColor: HfColors.primary,
+                    radius: 20,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            // Status banner
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: HfColors.peach.withValues(alpha: 0.3),
+              ),
+              child: Column(
+                children: [
+                  const Text('EMERGENCY REQUEST ACTIVE • BOOKING #EMG-7012', style: TextStyle(fontWeight: FontWeight.w700, color: HfColors.orange)),
+                  const SizedBox(height: 8),
+                  const Text('Emergency Booking Status', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
+                  const SizedBox(height: 4),
+                  const HfBadge(label: 'Priority Dispatched', tone: BadgeTone.orange),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Progress tracker
+                  HfCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text('PROGRESS TRACKER', style: TextStyle(fontWeight: FontWeight.w700)),
+                            const Spacer(),
+                            const HfBadge(label: 'Step 3 of 5', tone: BadgeTone.orange),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _TimelineStep(
+                          number: 1,
+                          title: 'Request Sent',
+                          description: 'System received your urgent request',
+                          time: '2:05 PM',
+                          completed: true,
+                        ),
+                        _TimelineStep(
+                          number: 2,
+                          title: 'Provider Accepted',
+                          description: 'Technician assigned & prepped tools',
+                          time: '2:07 PM',
+                          completed: true,
+                        ),
+                        _TimelineStep(
+                          number: 3,
+                          title: 'On the Way',
+                          description: 'Provider heading to your address with priority service van',
+                          tag: 'Active Now',
+                          completed: false,
+                          active: true,
+                        ),
+                        _TimelineStep(
+                          number: 4,
+                          title: 'Service Started',
+                          description: 'Inspection and pipe stabilization',
+                          completed: false,
+                        ),
+                        _TimelineStep(
+                          number: 5,
+                          title: 'Completed',
+                          description: 'Sign-off, safety test, and diagnostic receipt',
+                          completed: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Provider contact card
+                  HfCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 28,
+                              backgroundColor: HfColors.primarySoft,
+                              child: const Icon(Icons.person, color: HfColors.primary),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Marcus Vance', style: TextStyle(fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 4),
+                                  const Text('Master Plumber & Pipe Specialist', style: TextStyle(color: HfColors.muted, fontSize: 12)),
+                                  const SizedBox(height: 4),
+                                  const Text('Dispatched from Brooklyn Hub', style: TextStyle(color: HfColors.muted, fontSize: 11)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, color: HfColors.gold, size: 16),
+                            const SizedBox(width: 4),
+                            const Text('4.9 (125)', style: TextStyle(fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        HfSoftButton(
+                          label: 'Chat with Provider',
+                          icon: Icons.message,
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Booking details
+                  HfCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text('Booking Details', style: TextStyle(fontWeight: FontWeight.w700)),
+                            const Spacer(),
+                            const HfBadge(label: 'Urgent Tier', tone: BadgeTone.orange),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _DetailRow(Icons.plumbing, 'Service', 'Emergency Plumbing Repair'),
+                        _DetailRow(Icons.location_on, 'Service Address', '742 Evergreen Terrace, Apt 4B, Brooklyn, NY 11201'),
+                        _DetailRow(Icons.calendar_today, 'Booking Date & Time', 'Today, Oct 16 • 2:05 PM'),
+                        _DetailRow(Icons.access_time, 'Estimated Arrival', '15–25 minutes', highlight: true),
+                        _DetailRow(Icons.attach_money, 'Payment Terms', 'Cash settlement on completion (\$55.00 base diagnostic)'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Footer notice
+                  HfCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: HfColors.primary, size: 18),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text('Please ensure your building gate or front door is accessible for technician arrival.', style: TextStyle(color: HfColors.muted, fontSize: 11)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Return button
+                  HfSoftButton(
+                    label: 'Return to Dashboard',
+                    color: HfColors.danger.withValues(alpha: 0.1),
+                    foreground: HfColors.danger,
+                    onPressed: () {
+                      context.go('/c/home');
+                    },
+                  ),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _TimelineStep({
+    required int number,
+    required String title,
+    required String description,
+    String? time,
+    String? tag,
+    required bool completed,
+    bool active = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: completed ? HfColors.success : (active ? HfColors.orange : HfColors.border),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: completed
+                  ? const Icon(Icons.check, color: Colors.white, size: 14)
+                  : Text('$number', style: TextStyle(color: active ? Colors.white : HfColors.muted, fontWeight: FontWeight.w700, fontSize: 12)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(title, style: TextStyle(fontWeight: active ? FontWeight.w700 : FontWeight.w600, color: active ? HfColors.orange : null)),
+                    if (time != null) ...[
+                      const SizedBox(width: 8),
+                      Text(time, style: const TextStyle(color: HfColors.muted, fontSize: 11)),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(description, style: const TextStyle(color: HfColors.muted, fontSize: 12)),
+                if (tag != null) ...[
+                  const SizedBox(height: 4),
+                  HfBadge(label: tag, tone: BadgeTone.orange),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _DetailRow(IconData icon, String label, String value, {bool highlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: HfColors.primary, size: 18),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 12, color: HfColors.muted))),
+          Text(value, style: TextStyle(fontWeight: highlight ? FontWeight.w800 : FontWeight.w600, fontSize: 14, color: highlight ? HfColors.orange : null)),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== NORMAL BOOKING SCREENS ====================
+
 class BookingScheduleScreen extends ConsumerStatefulWidget {
   const BookingScheduleScreen({super.key});
 
