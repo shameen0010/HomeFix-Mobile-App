@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import 'core/theme/hf_theme.dart';
 import 'data/models.dart';
-import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screens.dart';
 import 'screens/booking_screens.dart';
@@ -15,6 +14,9 @@ import 'screens/onboarding_screen.dart';
 import 'screens/provider_onboard_screens.dart';
 import 'screens/provider_screens.dart';
 import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/reset_password_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,16 +45,8 @@ final router = GoRouter(
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
-      path: '/signup',
-      builder: (context, state) => const RegisterScreen(),
-    ),
-    GoRoute(
       path: '/reset-password',
       builder: (context, state) => const ResetPasswordScreen(),
-    ),
-    GoRoute(
-      path: '/a/home',
-      builder: (context, state) => const AdminShell(),
     ),
     GoRoute(
       path: '/c',
@@ -273,8 +267,17 @@ class HomeFixApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'HomeFix',
+<<<<<<< HEAD
+      home: const SplashScreen(),
+      routes: {
+        '/login': (_) => const LoginScreen(),
+        '/signup': (_) => const SignupScreen(),
+        '/reset-password': (_) => const ResetPasswordScreen(),
+      },
+=======
       theme: HfTheme.lightTheme,
       routerConfig: router,
+>>>>>>> feature/service-provider
     );
   }
 }
