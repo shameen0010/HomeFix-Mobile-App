@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../widgets/auth_widgets.dart';
@@ -217,8 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () =>
-                                      Navigator.of(context)
-                                          .pushNamed('/reset-password'),
+                                      context.push('/reset-password'),
                                   child: Text(
                                     'Forgot Password?',
                                     style: poppins(
@@ -257,9 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: poppins(13, color: AppColors.grey),
                         ),
                         GestureDetector(
-                          onTap: () =>
-                              Navigator.of(context)
-                                  .pushReplacementNamed('/signup'),
+                          onTap: () => context.push('/signup'),
                           child: Text(
                             'Sign Up',
                             style: poppins(
