@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../widgets/auth_widgets.dart';
-import 'admin_dashboard_screen.dart';
 import 'onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -35,8 +35,10 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final email = _id.text.trim().toLowerCase();
       final password = _pass.text;
-      final credential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       var role = 'customer';
       final user = credential.user;
@@ -58,9 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (_) => const AdminShell()),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Logged in as $role')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Logged in as $role')));
       }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
@@ -148,8 +149,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const HeroBadge(icon: Icons.home_rounded),
                     const SizedBox(height: 8),
-                    Text('Welcome Back!',
-                        style: poppins(26, w: FontWeight.w700)),
+                    Text(
+                      'Welcome Back!',
+                      style: poppins(26, w: FontWeight.w700),
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       'Sign in to manage your home services and bookings',
@@ -199,10 +202,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                         value: _remember,
                                         activeColor: AppColors.primary,
                                         shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(5)),
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
+                                        ),
                                         onChanged: (v) => setState(
-                                            () => _remember = v ?? false),
+                                          () => _remember = v ?? false,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -210,12 +216,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ],
                                 ),
                                 GestureDetector(
-                                  onTap: () => Navigator.of(context)
-                                      .pushNamed('/reset-password'),
-                                  child: Text('Forgot Password?',
-                                      style: poppins(12,
-                                          color: AppColors.primary,
-                                          w: FontWeight.w600)),
+                                  onTap: () =>
+                                      Navigator.of(context)
+                                          .pushNamed('/reset-password'),
+                                  child: Text(
+                                    'Forgot Password?',
+                                    style: poppins(
+                                      12,
+                                      color: AppColors.primary,
+                                      w: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -241,15 +252,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: WrapAlignment.center,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text("Don't have an account?  ",
-                            style: poppins(13, color: AppColors.grey)),
+                        Text(
+                          "Don't have an account?  ",
+                          style: poppins(13, color: AppColors.grey),
+                        ),
                         GestureDetector(
-                          onTap: () => Navigator.of(context)
-                              .pushReplacementNamed('/signup'),
-                          child: Text('Sign Up',
-                              style: poppins(13,
-                                  color: AppColors.primary,
-                                  w: FontWeight.w600)),
+                          onTap: () =>
+                              Navigator.of(context)
+                                  .pushReplacementNamed('/signup'),
+                          child: Text(
+                            'Sign Up',
+                            style: poppins(
+                              13,
+                              color: AppColors.primary,
+                              w: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     ),
