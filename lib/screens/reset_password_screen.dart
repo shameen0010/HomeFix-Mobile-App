@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/auth_widgets.dart';
 import 'onboarding_screen.dart';
 
@@ -39,7 +40,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       // (oobCode comes from the reset email link / deep link)
       await Future.delayed(const Duration(seconds: 1)); // remove later
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/login');
+      context.go('/login');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -197,8 +198,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 18),
                     GestureDetector(
-                      onTap: () => Navigator.of(context)
-                          .pushReplacementNamed('/login'),
+                      onTap: () => context.go('/login'),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
