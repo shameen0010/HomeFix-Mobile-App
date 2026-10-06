@@ -169,22 +169,43 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               ),
               const Spacer(),
               IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.home_outlined, color: HfColors.navy),
+                onPressed: () => context.push('/p/notifications'),
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_outlined, color: HfColors.navy),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: HfColors.emergency,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 iconSize: 22,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
               const SizedBox(width: 4),
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: HfColors.primarySoft,
-                backgroundImage: user?.avatarUrl != null
-                    ? NetworkImage(user!.avatarUrl!)
-                    : null,
-                child: user?.avatarUrl == null
-                    ? Icon(Icons.person, color: HfColors.primary, size: 18)
-                    : null,
+              GestureDetector(
+                onTap: () => context.push('/p/profile'),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: HfColors.primarySoft,
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl!)
+                      : const NetworkImage(
+                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                  child: user?.avatarUrl == null
+                      ? null
+                      : null,
+                ),
               ),
             ],
           ),
@@ -499,12 +520,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               _QuickAction(
                 icon: Icons.person_outline,
                 label: 'Profile',
-                onTap: () {},
+                onTap: () => context.push('/p/profile'),
               ),
               _QuickAction(
                 icon: Icons.star_outline,
                 label: 'Ratings and\nReviews',
-                onTap: () {},
+                onTap: () => context.push('/p/ratings'),
               ),
             ],
           ),
@@ -2409,29 +2430,2493 @@ class ProviderMessagesPlaceholder extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PROVIDER MORE / PLACEHOLDER ROUTE
+// ═══════════════════════════════════════════════════════════════════════════
+
 class ProviderMorePlaceholder extends StatelessWidget {
   const ProviderMorePlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return const ProviderSettingsScreen();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 34 — PROVIDER PUBLIC PROFILE
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ProviderProfileScreen extends ConsumerStatefulWidget {
+  const ProviderProfileScreen({super.key});
+
+  @override
+  ConsumerState<ProviderProfileScreen> createState() => _ProviderProfileScreenState();
+}
+
+class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(homefixStoreProvider);
+    final user = state.session;
+    final displayName = user?.name.isNotEmpty == true ? user!.name : 'David Miller';
+
+    return Scaffold(
+      backgroundColor: HfColors.bg,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
-            const Icon(Icons.more_horiz, size: 48, color: HfColors.muted),
-            const SizedBox(height: 12),
-            Text('More Options',
-                style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: HfColors.navy)),
+            // ── Top Bar ──────────────────────────────────────────────
+            Row(
+              children: [
+                if (Navigator.of(context).canPop())
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: HfColors.navy, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+                // HomeFix Logo + Online pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1B8FB5), Color(0xFF0B5F7A)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.home_rounded, color: Colors.white, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'HomeFix',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: HfColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: HfColors.success.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: HfColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Online',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: HfColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                // Settings icon
+                IconButton(
+                  onPressed: () => context.push('/p/settings'),
+                  icon: const Icon(Icons.settings_outlined, color: HfColors.navy, size: 22),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+                // Notification icon
+                IconButton(
+                  onPressed: () => context.push('/p/notifications'),
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.notifications_outlined, color: HfColors.navy, size: 22),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: HfColors.emergency,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+                const SizedBox(width: 4),
+                // Avatar
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: HfColors.primarySoft,
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl!)
+                      : const NetworkImage(
+                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
-            Text('Settings, profile, and more.',
-                style: GoogleFonts.inter(fontSize: 13, color: HfColors.grey)),
+            Text(
+              'Manage your public service credentials, bio, and rates',
+              style: GoogleFonts.inter(fontSize: 12, color: HfColors.grey),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Profile Hero Card ────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Photo with edit badge
+                  Center(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: 46,
+                          backgroundColor: HfColors.primarySoft,
+                          backgroundImage: user?.avatarUrl != null
+                              ? NetworkImage(user!.avatarUrl!)
+                              : const NetworkImage(
+                                  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200'),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Change photo clicked')),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: HfColors.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.edit, color: Colors.white, size: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    displayName,
+                    style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: HfColors.navy,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Master Plumber & Pipe Specialist',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: HfColors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle_rounded,
+                          color: Color(0xFF10B981), size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Licensed Master Plumber',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Badges
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F4FD),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFBCE1F2)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.check, size: 12, color: HfColors.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Verified Pro',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: HfColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Text(
+                          '🏆 Top Rated 2024',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // ── Metrics Bar ──────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: _ProfileMetricCard(
+                    title: '4.9 ★',
+                    subtitle: '142 reviews',
+                    isStar: true,
+                    onTap: () => context.push('/p/ratings'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: _ProfileMetricCard(
+                    title: '180+',
+                    subtitle: 'Completed',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: _ProfileMetricCard(
+                    title: '99%',
+                    subtitle: 'On-Time',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: _ProfileMetricCard(
+                    title: '7 Yrs',
+                    subtitle: 'Experience',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // ── About Me Section ─────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'About Me',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.edit_outlined, size: 18, color: HfColors.grey),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Friendly licensed master plumber serving Brooklyn and Greater NYC with over 7 years of residential leak repairs, fixture installations, and pipe restoration. Fully insured and equipped with professional emergency gear.',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: const Color(0xFF475569),
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F4FD),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFBCE1F2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.location_on, color: HfColors.primary, size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'SERVICE COVERAGE',
+                              style: GoogleFonts.inter(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                color: HfColors.primary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Brooklyn & Lower Manhattan (10 mi radius)',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: HfColors.navy,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // ── Pricing Overview Section ─────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Pricing Overview',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.edit_outlined, size: 18, color: HfColors.grey),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Price item 1
+                  const _ProfilePricingCard(
+                    title: 'Standard Diagnostic & 1st Hour',
+                    subtitle: 'Includes equipment check & triage',
+                    price: '\$45.00 / hr',
+                  ),
+                  const SizedBox(height: 10),
+                  // Price item 2
+                  const _ProfilePricingCard(
+                    title: 'Emergency Response',
+                    badge: '24/7',
+                    subtitle: 'Burst pipes & urgent water shutoff',
+                    price: '\$65.00 / hr',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // ── Action Buttons ───────────────────────────────────────
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Edit Profile details opened')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF11768F),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.edit, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Edit Profile Information',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Previewing public customer view')),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: HfColors.primary,
+                side: const BorderSide(color: HfColors.primary),
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.visibility_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Preview Public Customer View',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 }
+
+// ── Profile Metric Card ──────────────────────────────────────────────────
+class _ProfileMetricCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool isStar;
+  final VoidCallback? onTap;
+
+  const _ProfileMetricCard({
+    required this.title,
+    required this.subtitle,
+    this.isStar = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HfColors.border),
+        ),
+        child: Column(
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: isStar ? const Color(0xFFD97706) : HfColors.navy,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: HfColors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Profile Pricing Card ─────────────────────────────────────────────────
+class _ProfilePricingCard extends StatelessWidget {
+  final String title;
+  final String? badge;
+  final String subtitle;
+  final String price;
+
+  const _ProfilePricingCard({
+    required this.title,
+    this.badge,
+    required this.subtitle,
+    required this.price,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HfColors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                    ),
+                    if (badge != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Text(
+                          badge!,
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(fontSize: 11, color: HfColors.grey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            price,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: HfColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 35 — RATINGS & REVIEWS
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ProviderRatingsScreen extends ConsumerStatefulWidget {
+  const ProviderRatingsScreen({super.key});
+
+  @override
+  ConsumerState<ProviderRatingsScreen> createState() => _ProviderRatingsScreenState();
+}
+
+class _ProviderRatingsScreenState extends ConsumerState<ProviderRatingsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(homefixStoreProvider);
+    final user = state.session;
+
+    return Scaffold(
+      backgroundColor: HfColors.bg,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          children: [
+            // ── Top Bar ──────────────────────────────────────────────
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/p/home');
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: HfColors.navy, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: HfColors.primarySoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.star_rounded, color: HfColors.gold, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Reviews',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: HfColors.primarySoft,
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl!)
+                      : const NetworkImage(
+                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Header Title ─────────────────────────────────────────
+            Text(
+              'Ratings & Reviews',
+              style: GoogleFonts.inter(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: HfColors.navy,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Customer feedback and satisfaction ratings for ${user?.firstName ?? 'David Miller'}',
+              style: GoogleFonts.inter(fontSize: 13, color: HfColors.grey),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Rating Summary Card ──────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '4.9',
+                        style: GoogleFonts.inter(
+                          fontSize: 38,
+                          fontWeight: FontWeight.w900,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                      Text(
+                        ' /5.0',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HfColors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: List.generate(
+                      5,
+                      (i) => const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 22),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Based on 142 verified customer reviews',
+                    style: GoogleFonts.inter(fontSize: 12, color: HfColors.grey),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Progress bars
+                  const _RatingBarRow(label: '5 ★', percent: 0.92, displayPercent: '92%'),
+                  const SizedBox(height: 6),
+                  const _RatingBarRow(label: '4 ★', percent: 0.07, displayPercent: '7%'),
+                  const SizedBox(height: 6),
+                  const _RatingBarRow(label: '3 ★', percent: 0.01, displayPercent: '1%'),
+                  const SizedBox(height: 6),
+                  const _RatingBarRow(label: '2 ★', percent: 0.00, displayPercent: '0%'),
+                  const SizedBox(height: 6),
+                  const _RatingBarRow(label: '1 ★', percent: 0.00, displayPercent: '0%'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // ── Tag Chips Row (Positive Highlights) ──────────────────
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: const [
+                _RatingHighlightChip(icon: Icons.timer_outlined, label: '100% Punctual'),
+                _RatingHighlightChip(icon: Icons.cleaning_services_outlined, label: 'Clean Workspace'),
+                _RatingHighlightChip(icon: Icons.payments_outlined, label: 'Fair Cash Pricing'),
+                _RatingHighlightChip(icon: Icons.thumb_up_alt_outlined, label: 'Polite & Professional'),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // ── Customer Reviews List ────────────────────────────────
+            Text(
+              'Verified Customer Feedback',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: HfColors.navy,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Review Card 1 (Sarah Jenkins)
+            _ReviewCardWidget(
+              avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+              customerName: 'Sarah Jenkins',
+              timeAgo: '2 hours ago',
+              rating: '5.0 ★',
+              serviceTag: '🔧 Pipe Leakage Repair',
+              comment:
+                  'David arrived exactly on time and fixed the under-sink pipe joint leak within 45 minutes! Left the kitchen spotless and the \$48 cash payment was smooth and honest. Highly recommended!',
+              providerReply:
+                  'Thank you Sarah! Glad we could fix it quickly before any water damage occurred. Cheers!',
+            ),
+            const SizedBox(height: 12),
+
+            // Review Card 2 (Michael Chang)
+            _ReviewCardWidget(
+              avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+              customerName: 'Michael Chang',
+              timeAgo: 'Yesterday',
+              rating: '4.8 ★',
+              serviceTag: '🚿 Drain Unclogging',
+              comment:
+                  'Very professional and responsive. Arrived equipped with all necessary plumbing rods and unclogged our shower drain in no time.',
+              providerReply:
+                  'Glad we could help clear it up so promptly! Don\'t hesitate to reach out if you notice any other flow issues.',
+            ),
+            const SizedBox(height: 12),
+
+            // Review Card 3 (Elena Rostova)
+            const _ReviewCardWidget(
+              avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+              customerName: 'Elena Rostova',
+              timeAgo: '3 days ago',
+              rating: '5.0 ★',
+              serviceTag: '🚰 Water Valve Installation',
+              comment:
+                  'David replaced the main shut-off valve quickly and cleanly. Tested water pressure thoroughly before finishing. Excellent craftsman!',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Rating Bar Row ───────────────────────────────────────────────────────
+class _RatingBarRow extends StatelessWidget {
+  final String label;
+  final double percent;
+  final String displayPercent;
+
+  const _RatingBarRow({
+    required this.label,
+    required this.percent,
+    required this.displayPercent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 24,
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: HfColors.navy,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: percent,
+              backgroundColor: HfColors.field,
+              valueColor: const AlwaysStoppedAnimation(HfColors.primary),
+              minHeight: 7,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 28,
+          child: Text(
+            displayPercent,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: HfColors.grey,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Rating Highlight Chip ────────────────────────────────────────────────
+class _RatingHighlightChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _RatingHighlightChip({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F4FD),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFBCE1F2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: HfColors.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: HfColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Review Card Widget ───────────────────────────────────────────────────
+class _ReviewCardWidget extends StatelessWidget {
+  final String avatarUrl;
+  final String customerName;
+  final String timeAgo;
+  final String rating;
+  final String serviceTag;
+  final String comment;
+  final String? providerReply;
+
+  const _ReviewCardWidget({
+    required this.avatarUrl,
+    required this.customerName,
+    required this.timeAgo,
+    required this.rating,
+    required this.serviceTag,
+    required this.comment,
+    this.providerReply,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: HfColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: HfColors.primarySoft,
+                backgroundImage: NetworkImage(avatarUrl),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            customerName,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: HfColors.navy,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.check_circle,
+                            color: Color(0xFF3B82F6), size: 13),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Verified Customer',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: HfColors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      timeAgo,
+                      style: GoogleFonts.inter(fontSize: 11, color: HfColors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  rating,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFB45309),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              serviceTag,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: HfColors.navy,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            comment,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              color: const Color(0xFF334155),
+              height: 1.45,
+            ),
+          ),
+          if (providerReply != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: const Border(
+                  left: BorderSide(color: HfColors.primary, width: 3),
+                  top: BorderSide(color: HfColors.border),
+                  right: BorderSide(color: HfColors.border),
+                  bottom: BorderSide(color: HfColors.border),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '💬 David Miller',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F4FD),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Pro Provider',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: HfColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    providerReply!,
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: HfColors.grey,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 36 — SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ProviderSettingsScreen extends ConsumerStatefulWidget {
+  const ProviderSettingsScreen({super.key});
+
+  @override
+  ConsumerState<ProviderSettingsScreen> createState() => _ProviderSettingsScreenState();
+}
+
+class _ProviderSettingsScreenState extends ConsumerState<ProviderSettingsScreen> {
+  bool emergencyJobs = true;
+  String travelBuffer = '30 mins';
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(homefixStoreProvider);
+    final user = state.session;
+    final displayName = user?.name.isNotEmpty == true ? user!.name : 'David Miller';
+
+    return Scaffold(
+      backgroundColor: HfColors.bg,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          children: [
+            // ── Top Bar ──────────────────────────────────────────────
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/p/home');
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: HfColors.navy, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: HfColors.primarySoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.settings_outlined, color: HfColors.primary, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Settings',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: HfColors.primarySoft,
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl!)
+                      : const NetworkImage(
+                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Profile Mini Header Card ─────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: HfColors.primarySoft,
+                        backgroundImage: user?.avatarUrl != null
+                            ? NetworkImage(user!.avatarUrl!)
+                            : const NetworkImage(
+                                'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  displayName,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: HfColors.navy,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE8F4FD),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: const Color(0xFFBCE1F2)),
+                                  ),
+                                  child: Text(
+                                    '✓ Pro Active',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: HfColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Master Licensed Plumber • #NY-89219',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: HfColors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 22, color: HfColors.border),
+                  InkWell(
+                    onTap: () => context.push('/p/profile'),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.person_outline,
+                              size: 18, color: HfColors.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Manage Public Profile',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: HfColors.primary,
+                            ),
+                          ),
+                          const Spacer(),
+                          const Icon(Icons.chevron_right,
+                              size: 18, color: HfColors.primary),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Work & Dispatch Preferences ──────────────────────────
+            Row(
+              children: [
+                Text(
+                  'WORK & DISPATCH PREFERENCES',
+                  style: GoogleFonts.inter(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: HfColors.grey,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F4FD),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Live Mode',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: HfColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+              ),
+              child: Column(
+                children: [
+                  // Row 1: Emergency Same-Day Jobs
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.bolt_rounded,
+                              color: Color(0xFFD97706), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Emergency Same-Day Jobs',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: HfColors.navy,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '+15% Surge',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFFB45309),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Instant alerts for priority urgent dispatch',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: HfColors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: emergencyJobs,
+                          onChanged: (v) => setState(() => emergencyJobs = v),
+                          activeTrackColor: HfColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: HfColors.border),
+                  // Row 2: Travel Buffer Between Jobs
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F4FD),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.access_time_rounded,
+                              color: HfColors.primary, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Travel Buffer Between Jobs',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: HfColors.navy,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Prevents overlapping commute delays',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: HfColors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: HfColors.field,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: HfColors.border),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: travelBuffer,
+                              isDense: true,
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                                  size: 16, color: HfColors.navy),
+                              items: ['15 mins', '30 mins', '45 mins', '60 mins']
+                                  .map((String val) {
+                                return DropdownMenuItem<String>(
+                                  value: val,
+                                  child: Text(
+                                    val,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: HfColors.navy,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => travelBuffer = val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Account & Security ───────────────────────────────────
+            Text(
+              'ACCOUNT & SECURITY',
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+                color: HfColors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+              ),
+              child: Column(
+                children: [
+                  _SettingsTile(
+                    icon: Icons.shield_outlined,
+                    iconBg: const Color(0xFFE8F4FD),
+                    iconColor: HfColors.primary,
+                    title: 'License & Insurance',
+                    subtitle: 'Verified (Valid through Dec 2026)',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('License NY-89219 verified with NYC Dept of Buildings')),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1, color: HfColors.border),
+                  _SettingsTile(
+                    icon: Icons.lock_outline,
+                    iconBg: const Color(0xFFE8F4FD),
+                    iconColor: HfColors.primary,
+                    title: 'Change Password & Security PIN',
+                    subtitle: 'Updated 2 months ago',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Password security management opened')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Support & Legal ──────────────────────────────────────
+            Text(
+              'SUPPORT & LEGAL',
+              style: GoogleFonts.inter(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+                color: HfColors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HfColors.border),
+              ),
+              child: Column(
+                children: [
+                  // Hotline
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.phone_outlined,
+                              color: Color(0xFFD97706), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Pro Help & Emergency Hotline',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: HfColors.navy,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '24/7',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFFB45309),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Priority phone line for technicians',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: HfColors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Calling Pro Helpline: 1-800-555-PROS')),
+                            );
+                          },
+                          icon: const Icon(Icons.call,
+                              color: HfColors.primary, size: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: HfColors.border),
+                  _SettingsTile(
+                    icon: Icons.description_outlined,
+                    iconBg: const Color(0xFFE8F4FD),
+                    iconColor: HfColors.primary,
+                    title: 'Terms of Service & Pro Guarantee',
+                    subtitle: 'Review policy standards and covenants',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Opening Pro Terms & Guarantee')),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1, color: HfColors.border),
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F4FD),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.info_outline,
+                              color: HfColors.primary, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'App Version',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: HfColors.navy,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'HomeFix Pro v2.4.1 (Build 412)',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: HfColors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F4FD),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Latest',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: HfColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Logout Action Button ─────────────────────────────────
+            InkWell(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text(
+                      'Log Out',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                    ),
+                    content: Text(
+                      'Are you sure you want to log out of your HomeFix Pro account?',
+                      style: GoogleFonts.inter(fontSize: 13),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.inter(color: HfColors.grey),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          ref.read(homefixStoreProvider.notifier).logout();
+                          context.go('/login');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(
+                          'Log Out',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.logout_rounded,
+                        color: Color(0xFFDC2626), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Log Out of Pro Account',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFDC2626),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Settings Tile ────────────────────────────────────────────────────────
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: HfColors.navy,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: HfColors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: HfColors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 37 — NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ProviderNotificationsScreen extends ConsumerStatefulWidget {
+  const ProviderNotificationsScreen({super.key});
+
+  @override
+  ConsumerState<ProviderNotificationsScreen> createState() =>
+      _ProviderNotificationsScreenState();
+}
+
+class _ProviderNotificationsScreenState
+    extends ConsumerState<ProviderNotificationsScreen> {
+  String selectedFilter = 'All';
+  bool urgentDismissed = false;
+  bool notif1Read = false;
+  bool notif2Read = false;
+  bool notif3Read = false;
+
+  int get unreadCount {
+    int count = 0;
+    if (!urgentDismissed && !notif1Read) count++;
+    if (!notif2Read) count++;
+    if (!notif3Read) count++;
+    return count;
+  }
+
+  void markAllRead() {
+    setState(() {
+      notif1Read = true;
+      notif2Read = true;
+      notif3Read = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('All notifications marked as read')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(homefixStoreProvider);
+    final user = state.session;
+
+    return Scaffold(
+      backgroundColor: HfColors.bg,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          children: [
+            // ── Top Bar ──────────────────────────────────────────────
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/p/home');
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: HfColors.navy, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: HfColors.primarySoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.notifications_active_outlined,
+                          color: HfColors.primary, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Notifications',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: HfColors.navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: HfColors.primarySoft,
+                  backgroundImage: user?.avatarUrl != null
+                      ? NetworkImage(user!.avatarUrl!)
+                      : const NetworkImage(
+                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Top Control Bar ──────────────────────────────────────
+            Row(
+              children: [
+                Text(
+                  'Inbox',
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: HfColors.navy,
+                  ),
+                ),
+                if (unreadCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Text(
+                      '$unreadCount New',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                GestureDetector(
+                  onTap: markAllRead,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.done_all,
+                          size: 15, color: HfColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Mark all read',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: HfColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // ── Filter Category Chips ────────────────────────────────
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ['All', 'Bookings', 'Messages', 'System']
+                    .map((filter) {
+                  final isSelected = selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => setState(() => selectedFilter = filter),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isSelected ? HfColors.navy : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? HfColors.navy : HfColors.border,
+                          ),
+                        ),
+                        child: Text(
+                          filter,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected ? Colors.white : HfColors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Section: TODAY ───────────────────────────────────────
+            Row(
+              children: [
+                Text(
+                  'TODAY',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: HfColors.grey,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Updated just now',
+                  style: GoogleFonts.inter(
+                    fontSize: 10.5,
+                    color: HfColors.grey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Notification 1: Urgent Request Card
+            if (!urgentDismissed &&
+                (selectedFilter == 'All' || selectedFilter == 'Bookings'))
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F4FD),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: HfColors.primary, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: HfColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0B5F7A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.bolt,
+                          color: Color(0xFFF59E0B), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (!notif1Read) ...[
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF3B82F6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  'New Urgent Request nearby!',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: HfColors.navy,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '5m ago',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: HfColors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Pipe Leakage Repair at 742 Evergreen Terrace (1.2 mi away). Estimated cash payout: \$48.00',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF334155),
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() => notif1Read = true);
+                                  context.push('/p/requests');
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0B5F7A),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Review Request',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_forward_rounded,
+                                        size: 13),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              TextButton(
+                                onPressed: () =>
+                                    setState(() => urgentDismissed = true),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'Dismiss',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: HfColors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Notification 2: Cash Payment Confirmed
+            if (selectedFilter == 'All' || selectedFilter == 'System')
+              _NotifItemCard(
+                icon: Icons.payments_outlined,
+                iconBg: const Color(0xFFECFDF5),
+                iconColor: const Color(0xFF10B981),
+                isUnread: !notif2Read,
+                title: 'Cash Payment Confirmed #HF-8921',
+                timeAgo: '1h ago',
+                description:
+                    'Your settlement of \$48.00 cash from Sarah Jenkins has been recorded to your daily register.',
+                onTap: () => setState(() => notif2Read = true),
+              ),
+
+            // Notification 3: 5-Star Review Received
+            if (selectedFilter == 'All' || selectedFilter == 'Bookings')
+              _NotifItemCard(
+                icon: Icons.star_rounded,
+                iconBg: const Color(0xFFFEF3C7),
+                iconColor: const Color(0xFFD97706),
+                isUnread: !notif3Read,
+                title: '5-Star Review Received!',
+                timeAgo: '2h ago',
+                description:
+                    'Sarah Jenkins left you a 5-star review: "David arrived exactly on time and fixed the stubborn leak with no mess left behind!"',
+                onTap: () {
+                  setState(() => notif3Read = true);
+                  context.push('/p/ratings');
+                },
+              ),
+            const SizedBox(height: 16),
+
+            // ── Section: YESTERDAY ───────────────────────────────────
+            if (selectedFilter == 'All' || selectedFilter == 'Messages') ...[
+              Text(
+                'YESTERDAY',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: HfColors.grey,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Notification 4: Michael Chang Message
+              InkWell(
+                onTap: () => context.push('/p/chat'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: HfColors.border),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const CircleAvatar(
+                        radius: 18,
+                        backgroundColor: HfColors.primarySoft,
+                        backgroundImage: NetworkImage(
+                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Michael Chang',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: HfColors.navy,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '4:15 PM',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: HfColors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '"Can you also check the second bathroom valve tomorrow?"',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Notif Item Card ──────────────────────────────────────────────────────
+class _NotifItemCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final bool isUnread;
+  final String title;
+  final String timeAgo;
+  final String description;
+  final VoidCallback onTap;
+
+  const _NotifItemCard({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.isUnread,
+    required this.title,
+    required this.timeAgo,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: HfColors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (isUnread) ...[
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF3B82F6),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: HfColors.navy,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        timeAgo,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: HfColors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFF475569),
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

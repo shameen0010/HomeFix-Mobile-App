@@ -206,6 +206,22 @@ final router = GoRouter(
           path: 'chat',
           builder: (context, state) => const ProviderChatScreen(),
         ),
+        GoRoute(
+          path: 'profile',
+          builder: (context, state) => const ProviderShell(index: 4, child: ProviderProfileScreen()),
+        ),
+        GoRoute(
+          path: 'ratings',
+          builder: (context, state) => const ProviderRatingsScreen(),
+        ),
+        GoRoute(
+          path: 'settings',
+          builder: (context, state) => const ProviderShell(index: 4, child: ProviderSettingsScreen()),
+        ),
+        GoRoute(
+          path: 'notifications',
+          builder: (context, state) => const ProviderNotificationsScreen(),
+        ),
       ],
     ),
   ],
