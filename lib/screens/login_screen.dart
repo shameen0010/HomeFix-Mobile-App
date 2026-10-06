@@ -2,7 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/homefix_store.dart';
+import '../data/models.dart';
 import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../widgets/auth_widgets.dart';
 import 'onboarding_screen.dart';
@@ -61,8 +64,39 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (_) => const AdminShell()),
         );
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Logged in as $role')));
+        final profile = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user?.uid ?? email)
+            .get();
+        final data = profile.data() ?? <String, dynamic>{};
+        final appRole = role == 'service_partner'
+            ? UserRole.provider
+            : UserRole.customer;
+        if (!mounted) return;
+        ProviderScope.containerOf(context, listen: false)
+            .read(homefixStoreProvider.notifier)
+            .setFirebaseSession(
+              id: user?.uid ?? email,
+              name: data['name'] as String? ?? user?.displayName ?? email,
+              email: email,
+              phone: data['phone'] as String? ?? '',
+              location: data['location'] as String? ?? 'Nugegoda, Sri Lanka',
+              role: appRole,
+            );
+        if (!mounted) return;
+        if (appRole == UserRole.provider) {
+          final provider = await FirebaseFirestore.instance
+              .collection('providers')
+              .doc(user?.uid)
+              .get();
+          final verificationStatus =
+              (provider.data()?['verificationStatus'] ?? provider.data()?['status'] ?? 'pending').toString();
+          context.go(verificationStatus == 'approved'
+              ? '/p/home'
+              : '/provider-onboard/pending');
+        } else {
+          context.go('/c/home');
+        }
       }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;

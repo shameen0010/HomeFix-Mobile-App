@@ -287,6 +287,29 @@ class HomefixStore extends StateNotifier<HomefixState> {
     );
   }
 
+  void setFirebaseSession({
+    required String id,
+    required String name,
+    required String email,
+    String phone = '',
+    String location = 'Nugegoda, Sri Lanka',
+    required UserRole role,
+  }) {
+    final nameParts = name.trim().split(RegExp(r'\s+'));
+    final displayName = name.trim().isEmpty ? email : name.trim();
+    final user = User(
+      id: id,
+      firstName: nameParts.isEmpty ? displayName : nameParts.first,
+      lastName: nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '',
+      name: displayName,
+      email: email,
+      phone: phone,
+      location: location,
+      role: role,
+    );
+    state = state.copyWith(session: user);
+  }
+
   void toggleAlerts() {
     state = state.copyWith(alertsOn: !state.alertsOn);
   }

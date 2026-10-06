@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/auth_widgets.dart';
+import '../../widgets/auth_widgets.dart';
 import 'onboarding_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {

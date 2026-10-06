@@ -7,13 +7,15 @@ import 'core/theme/hf_theme.dart';
 import 'data/models.dart';
 import 'features/admin/screens/admin_dashboard_screen.dart';
 import 'firebase_options.dart';
-import 'screens/booking_screens.dart';
-import 'screens/customer_additional_screens.dart';
-import 'screens/customer_screens.dart';
+import 'features/customer/booking_screens.dart';
+import 'features/customer/customer_additional_screens.dart';
+import 'features/customer/customer_screens.dart';
+import 'features/customer/screens/my_bookings_screen.dart';
+import 'features/customer/screens/search_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/provider_onboard_screens.dart';
-import 'screens/provider_screens.dart';
+import 'features/provider/provider_onboard_screens.dart';
+import 'features/provider/provider_screens.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/splash_screen.dart';
@@ -68,12 +70,12 @@ final router = GoRouter(
           path: 'search',
           builder: (context, state) {
             final initial = state.uri.queryParameters['q'];
-            return CustomerShell(index: 1, child: SearchScreen(initial: initial));
+            return CustomerShell(index: 1, child: FirestoreSearchScreen(initial: initial));
           },
         ),
         GoRoute(
           path: 'bookings',
-          builder: (context, state) => const CustomerShell(index: 2, child: CustomerBookingsScreen()),
+          builder: (context, state) => const CustomerShell(index: 2, child: MyBookingsScreen()),
         ),
         GoRoute(
           path: 'messages',
@@ -81,11 +83,11 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'profile',
-          builder: (context, state) => const CustomerShell(index: 4, child: ProfileScreen()),
+          builder: (context, state) => const CustomerShell(index: 4, child: LiveCustomerProfileScreen()),
         ),
         GoRoute(
           path: 'notifications',
-          builder: (context, state) => const CustomerShell(index: 4, child: NotificationsScreen()),
+          builder: (context, state) => const CustomerShell(index: 4, child: LiveCustomerNotificationsScreen()),
         ),
       ],
     ),
@@ -93,7 +95,7 @@ final router = GoRouter(
       path: '/provider/:userId',
       builder: (context, state) {
         final userId = state.pathParameters['userId']!;
-        return ProviderPublicProfile(userId: userId);
+        return LiveProviderPublicProfile(userId: userId);
       },
     ),
     GoRoute(
@@ -105,15 +107,21 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/payment-confirmation',
-      builder: (context, state) => const PaymentConfirmationScreen(),
+      builder: (context, state) => FirestorePaymentConfirmationScreen(
+        bookingId: state.uri.queryParameters['bookingId'] ?? '',
+      ),
     ),
     GoRoute(
       path: '/service-complete',
-      builder: (context, state) => const ServiceCompleteScreen(),
+      builder: (context, state) => FirestoreServiceCompleteScreen(
+        bookingId: state.uri.queryParameters['bookingId'] ?? '',
+      ),
     ),
     GoRoute(
       path: '/rate-review',
-      builder: (context, state) => const RateReviewScreen(),
+      builder: (context, state) => FirestoreRateReviewScreen(
+        bookingId: state.uri.queryParameters['bookingId'] ?? '',
+      ),
     ),
     GoRoute(
       path: '/service/:serviceId',
@@ -132,20 +140,20 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/booking-success',
-      builder: (context, state) => const BookingSuccessScreen(),
+      builder: (context, state) => const FirestoreBookingSuccessScreen(),
     ),
     GoRoute(
       path: '/booking-checkout/:bookingId',
       builder: (context, state) {
         final bookingId = state.pathParameters['bookingId']!;
-        return BookingCheckoutScreen(bookingId: bookingId);
+        return FirestoreBookingCheckoutScreen(bookingId: bookingId);
       },
     ),
     GoRoute(
       path: '/cancel-booking/:bookingId',
       builder: (context, state) {
         final bookingId = state.pathParameters['bookingId']!;
-        return CancelBookingScreen(bookingId: bookingId);
+        return FirestoreCancelBookingScreen(bookingId: bookingId);
       },
     ),
     GoRoute(
@@ -166,7 +174,12 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/emergency-status',
-      builder: (context, state) => const EmergencyStatusScreen(),
+      builder: (context, state) {
+        final bookingId = state.uri.queryParameters['bookingId'];
+        return bookingId == null || bookingId.isEmpty
+            ? const EmergencyStatusScreen()
+            : FirestoreEmergencyStatusScreen(bookingId: bookingId);
+      },
     ),
     // Provider onboarding flow
     GoRoute(
@@ -180,6 +193,16 @@ final router = GoRouter(
         return RegistrationCompleteScreen(selectedCategories: categories);
       },
     ),
+    GoRoute(
+      path: '/provider-onboard/credentials',
+      builder: (context, state) => ProviderCredentialsScreen(
+        categories: (state.extra as List<String>?) ?? const [],
+      ),
+    ),
+    GoRoute(
+      path: '/provider-onboard/pending',
+      builder: (context, state) => const ProviderVerificationPendingScreen(),
+    ),
     // Provider main routes
     GoRoute(
       path: '/p',
@@ -191,7 +214,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'requests',
-          builder: (context, state) => const ProviderShell(index: 1, child: ProviderRequestsPlaceholder()),
+          builder: (context, state) => const ProviderShell(index: 1, child: ProviderRequestsScreen()),
         ),
         GoRoute(
           path: 'schedule',
@@ -207,32 +230,35 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'services',
-          builder: (context, state) => const ProviderShell(index: 0, child: ManageServicesScreen()),
+          builder: (context, state) => const ProviderShell(index: 0, child: LiveProviderServicesScreen()),
         ),
         GoRoute(
           path: 'availability',
-          builder: (context, state) => const ProviderShell(index: 0, child: ProviderAvailabilityScreen()),
+          builder: (context, state) => const ProviderShell(index: 0, child: LiveProviderAvailabilityScreen()),
         ),
         GoRoute(
           path: 'chat',
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
-            return ProviderChatScreen(
-              customerName: extra?['customerName'] as String? ?? 'Sarah Jenkins',
-              customerAvatar: extra?['customerAvatar'] as String? ?? '',
-              customerAddress: extra?['customerAddress'] as String? ?? 'Customer • Oakridge Lane',
-              bookingId: extra?['bookingId'] as String? ?? '#HF-8921',
-              serviceTitle: extra?['serviceTitle'] as String? ?? 'Pipe Leakage Repair',
-            );
+            final bookingId = extra?['bookingId'] as String?;
+            return bookingId == null || bookingId.isEmpty
+                ? const ProviderChatScreen(
+                    customerName: 'Customer',
+                    customerAvatar: '',
+                    customerAddress: 'Booking chat',
+                    bookingId: '',
+                    serviceTitle: 'Home service',
+                  )
+                : ChatScreen(bookingId: bookingId);
           },
         ),
         GoRoute(
           path: 'profile',
-          builder: (context, state) => const ProviderShell(index: 4, child: ProviderProfileScreen()),
+          builder: (context, state) => const ProviderShell(index: 4, child: LiveProviderProfileScreen()),
         ),
         GoRoute(
           path: 'ratings',
-          builder: (context, state) => const ProviderRatingsScreen(),
+          builder: (context, state) => const LiveProviderRatingsScreen(),
         ),
         GoRoute(
           path: 'settings',
@@ -240,15 +266,15 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'notifications',
-          builder: (context, state) => const ProviderNotificationsScreen(),
+          builder: (context, state) => const LiveProviderNotificationsScreen(),
         ),
         GoRoute(
           path: 'active-service',
-          builder: (context, state) => const ProviderActiveServiceScreen(),
+          builder: (context, state) => const LiveProviderActiveServiceScreen(),
         ),
         GoRoute(
           path: 'job-receipt',
-          builder: (context, state) => const ProviderJobDetailsReceiptScreen(),
+          builder: (context, state) => const LiveProviderReceiptScreen(),
         ),
         GoRoute(
           path: 'customer-details',
