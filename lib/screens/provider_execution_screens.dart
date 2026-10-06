@@ -1404,15 +1404,46 @@ class _ProviderRequestsScreenState
                       const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
                 const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => context.push('/p/profile'),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: HfColors.primarySoft,
-                    backgroundImage: user?.avatarUrl != null
-                        ? NetworkImage(user!.avatarUrl!)
-                        : const NetworkImage(
-                            'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                Tooltip(
+                  message: 'Profile',
+                  child: InkWell(
+                    onTap: () => context.push('/p/profile'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: HfColors.primarySoft,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: HfColors.primary.withValues(alpha: 0.35),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                            ? Image.network(
+                                user.avatarUrl!,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Center(
+                                  child: Icon(
+                                    Icons.person_rounded,
+                                    size: 22,
+                                    color: HfColors.primary,
+                                  ),
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  size: 22,
+                                  color: HfColors.primary,
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -2009,15 +2040,46 @@ class _ProviderScheduleScreenState
                       const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
                 const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => context.push('/p/profile'),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: HfColors.primarySoft,
-                    backgroundImage: user?.avatarUrl != null
-                        ? NetworkImage(user!.avatarUrl!)
-                        : const NetworkImage(
-                            'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                Tooltip(
+                  message: 'Profile',
+                  child: InkWell(
+                    onTap: () => context.push('/p/profile'),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: HfColors.primarySoft,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: HfColors.primary.withValues(alpha: 0.35),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                            ? Image.network(
+                                user.avatarUrl!,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Center(
+                                  child: Icon(
+                                    Icons.person_rounded,
+                                    size: 22,
+                                    color: HfColors.primary,
+                                  ),
+                                ),
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  size: 22,
+                                  color: HfColors.primary,
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ),
               ],

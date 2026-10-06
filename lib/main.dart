@@ -188,7 +188,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'messages',
-          builder: (context, state) => const ProviderShell(index: 3, child: ProviderMessagesPlaceholder()),
+          builder: (context, state) => const ProviderShell(index: 3, child: ProviderMessagesScreen()),
         ),
         GoRoute(
           path: 'more',
@@ -204,7 +204,16 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'chat',
-          builder: (context, state) => const ProviderChatScreen(),
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return ProviderChatScreen(
+              customerName: extra?['customerName'] as String? ?? 'Sarah Jenkins',
+              customerAvatar: extra?['customerAvatar'] as String? ?? '',
+              customerAddress: extra?['customerAddress'] as String? ?? 'Customer • Oakridge Lane',
+              bookingId: extra?['bookingId'] as String? ?? '#HF-8921',
+              serviceTitle: extra?['serviceTitle'] as String? ?? 'Pipe Leakage Repair',
+            );
+          },
         ),
         GoRoute(
           path: 'profile',

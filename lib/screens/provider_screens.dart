@@ -20,7 +20,7 @@ const providerNav = [
   HfNavItem(Icons.inbox_outlined, 'Requests'),
   HfNavItem(Icons.calendar_today_outlined, 'Schedule'),
   HfNavItem(Icons.chat_bubble_outline, 'Messages'),
-  HfNavItem(Icons.more_horiz, 'More'),
+  HfNavItem(Icons.settings_outlined, 'Settings'),
 ];
 
 class ProviderShell extends StatelessWidget {
@@ -41,7 +41,7 @@ class ProviderShell extends StatelessWidget {
             '/p/requests',
             '/p/schedule',
             '/p/messages',
-            '/p/more',
+            '/p/settings',
           ][i]);
         },
       ),
@@ -196,18 +196,46 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: () => context.push('/p/profile'),
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: HfColors.primarySoft,
-                  backgroundImage: user?.avatarUrl != null
-                      ? NetworkImage(user!.avatarUrl!)
-                      : const NetworkImage(
-                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
-                  child: user?.avatarUrl == null
-                      ? null
-                      : null,
+              Tooltip(
+                message: 'Profile',
+                child: InkWell(
+                  onTap: () => context.push('/p/profile'),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: HfColors.primarySoft,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: HfColors.primary.withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                          ? Image.network(
+                              user.avatarUrl!,
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  size: 22,
+                                  color: HfColors.primary,
+                                ),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(
+                                Icons.person_rounded,
+                                size: 22,
+                                color: HfColors.primary,
+                              ),
+                            ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1934,7 +1962,20 @@ const _mockChat = [
 ];
 
 class ProviderChatScreen extends ConsumerStatefulWidget {
-  const ProviderChatScreen({super.key});
+  final String customerName;
+  final String customerAvatar;
+  final String customerAddress;
+  final String bookingId;
+  final String serviceTitle;
+
+  const ProviderChatScreen({
+    super.key,
+    this.customerName = 'Sarah Jenkins',
+    this.customerAvatar = '',
+    this.customerAddress = 'Customer • Oakridge Lane',
+    this.bookingId = '#HF-8921',
+    this.serviceTitle = 'Pipe Leakage Repair',
+  });
 
   @override
   ConsumerState<ProviderChatScreen> createState() =>
@@ -2035,8 +2076,21 @@ class _ProviderChatScreenState extends ConsumerState<ProviderChatScreen> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: HfColors.primarySoft,
-                    child: Icon(Icons.person,
-                        color: HfColors.primary, size: 22),
+                    backgroundImage: widget.customerAvatar.isNotEmpty
+                        ? NetworkImage(widget.customerAvatar)
+                        : null,
+                    child: widget.customerAvatar.isEmpty
+                        ? Text(
+                            widget.customerName.isNotEmpty
+                                ? widget.customerName[0]
+                                : 'C',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: HfColors.primary,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -2045,12 +2099,15 @@ class _ProviderChatScreenState extends ConsumerState<ProviderChatScreen> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              'Sarah Jenkins',
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: HfColors.navy,
+                            Flexible(
+                              child: Text(
+                                widget.customerName,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: HfColors.navy,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -2075,23 +2132,24 @@ class _ProviderChatScreenState extends ConsumerState<ProviderChatScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Customer • Oakridge Lane',
+                          widget.customerAddress,
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: HfColors.grey,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
                   _CircleIconBtn(
                     icon: Icons.phone_outlined,
-                    onTap: () {},
+                    onTap: () => hfSnack(context, 'Calling ${widget.customerName}...'),
                   ),
                   const SizedBox(width: 6),
                   _CircleIconBtn(
                     icon: Icons.info_outline,
-                    onTap: () {},
+                    onTap: () => hfSnack(context, 'Job: ${widget.serviceTitle} (${widget.bookingId})'),
                   ),
                 ],
               ),
@@ -2116,12 +2174,13 @@ class _ProviderChatScreenState extends ConsumerState<ProviderChatScreen> {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        'Booking #HF-8921 confirmed for Today at 11:30 AM',
+                        'Booking ${widget.bookingId} • ${widget.serviceTitle}',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: HfColors.primary,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -2368,33 +2427,700 @@ class ProviderSchedulePlaceholder extends StatelessWidget {
   }
 }
 
-class ProviderMessagesPlaceholder extends StatelessWidget {
-  const ProviderMessagesPlaceholder({super.key});
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN: PROVIDER MESSAGES / CUSTOMER CHAT LIST
+// ═══════════════════════════════════════════════════════════════════════════
+
+class CustomerChatItem {
+  final String id;
+  final String customerName;
+  final String avatarUrl;
+  final String lastMessage;
+  final String time;
+  final int unreadCount;
+  final bool isOnline;
+  final String jobTitle;
+  final String bookingId;
+  final String address;
+  final bool isActiveJob;
+
+  const CustomerChatItem({
+    required this.id,
+    required this.customerName,
+    required this.avatarUrl,
+    required this.lastMessage,
+    required this.time,
+    this.unreadCount = 0,
+    this.isOnline = false,
+    required this.jobTitle,
+    required this.bookingId,
+    required this.address,
+    this.isActiveJob = false,
+  });
+}
+
+class ProviderMessagesScreen extends ConsumerStatefulWidget {
+  const ProviderMessagesScreen({super.key});
+
+  @override
+  ConsumerState<ProviderMessagesScreen> createState() =>
+      _ProviderMessagesScreenState();
+}
+
+class _ProviderMessagesScreenState
+    extends ConsumerState<ProviderMessagesScreen> {
+  String _searchQuery = '';
+  int _selectedFilter = 0; // 0: All, 1: Active Jobs, 2: Unread
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  static const List<CustomerChatItem> _allChats = [
+    CustomerChatItem(
+      id: 'chat_1',
+      customerName: 'Sarah Jenkins',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+      lastMessage:
+          "I've turned off the main water valve as you requested. Are you close?",
+      time: '11:42 AM',
+      unreadCount: 2,
+      isOnline: true,
+      jobTitle: 'Pipe Leakage Repair',
+      bookingId: '#HF-8921',
+      address: '742 Evergreen Terrace, Apt 4B',
+      isActiveJob: true,
+    ),
+    CustomerChatItem(
+      id: 'chat_2',
+      customerName: 'Alex Rivera',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      lastMessage:
+          'Sounds good David! Please ring the front buzzer when you arrive.',
+      time: '10:15 AM',
+      unreadCount: 1,
+      isOnline: true,
+      jobTitle: 'AC Diagnostic & Filter Fix',
+      bookingId: '#HF-8914',
+      address: '1204 Pine Valley Rd',
+      isActiveJob: true,
+    ),
+    CustomerChatItem(
+      id: 'chat_3',
+      customerName: 'Michael Chen',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+      lastMessage:
+          'Can you inspect the basement sub-panel as well while you are here?',
+      time: 'Yesterday',
+      unreadCount: 0,
+      isOnline: true,
+      jobTitle: 'Electrical Panel Upgrade 200A',
+      bookingId: '#HF-8872',
+      address: '501 Cedar Crest Dr',
+      isActiveJob: true,
+    ),
+    CustomerChatItem(
+      id: 'chat_4',
+      customerName: 'Emma Watson',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      lastMessage:
+          'Thank you for bringing the eco-friendly cleaning solutions! Left 5 stars.',
+      time: 'Yesterday',
+      unreadCount: 0,
+      isOnline: false,
+      jobTitle: 'Deep Kitchen & Bath Sanitization',
+      bookingId: '#HF-8890',
+      address: '88 Elmwood Blvd, Suite 12',
+      isActiveJob: false,
+    ),
+    CustomerChatItem(
+      id: 'chat_5',
+      customerName: 'Lisa Wong',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+      lastMessage:
+          'The paint finish matched perfectly! Thank you for fixing the wall seams.',
+      time: 'Oct 4',
+      unreadCount: 0,
+      isOnline: false,
+      jobTitle: 'Drywall Patch & Interior Paint',
+      bookingId: '#HF-8820',
+      address: '320 Maple Ave',
+      isActiveJob: false,
+    ),
+    CustomerChatItem(
+      id: 'chat_6',
+      customerName: 'Robert Taylor',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+      lastMessage:
+          'Appreciate the emergency water pressure fix on Saturday night!',
+      time: 'Oct 2',
+      unreadCount: 0,
+      isOnline: false,
+      jobTitle: 'Water Heater Pressure Relief',
+      bookingId: '#HF-8805',
+      address: '104 Magnolia Court',
+      isActiveJob: false,
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _openChat(CustomerChatItem chat) {
+    context.push(
+      '/p/chat',
+      extra: {
+        'customerName': chat.customerName,
+        'customerAvatar': chat.avatarUrl,
+        'customerAddress': '${chat.jobTitle} • ${chat.address}',
+        'bookingId': chat.bookingId,
+        'serviceTitle': chat.jobTitle,
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final query = _searchQuery.trim().toLowerCase();
+
+    final filtered = _allChats.where((c) {
+      if (_selectedFilter == 1 && !c.isActiveJob) return false;
+      if (_selectedFilter == 2 && c.unreadCount == 0) return false;
+      if (query.isNotEmpty) {
+        final matchName = c.customerName.toLowerCase().contains(query);
+        final matchJob = c.jobTitle.toLowerCase().contains(query);
+        final matchMsg = c.lastMessage.toLowerCase().contains(query);
+        final matchAddr = c.address.toLowerCase().contains(query);
+        return matchName || matchJob || matchMsg || matchAddr;
+      }
+      return true;
+    }).toList();
+
+    final totalUnread =
+        _allChats.fold<int>(0, (sum, c) => sum + c.unreadCount);
+
     return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.chat_bubble_outline,
-                size: 48, color: HfColors.muted),
-            const SizedBox(height: 12),
-            Text('Messages',
-                style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: HfColors.navy)),
-            const SizedBox(height: 4),
-            Text('No active conversations.',
-                style: GoogleFonts.inter(fontSize: 13, color: HfColors.grey)),
-          ],
+      child: Column(
+        children: [
+          // ── Header ──────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Customer Messages',
+                            style: GoogleFonts.inter(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: HfColors.navy,
+                            ),
+                          ),
+                          if (totalUnread > 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: HfColors.emergency,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$totalUnread new',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Direct communication with your booked clients',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: HfColors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => hfSnack(context, 'Synced with messages.'),
+                  icon: const Icon(Icons.refresh_rounded, color: HfColors.navy),
+                  tooltip: 'Refresh',
+                ),
+              ],
+            ),
+          ),
+
+          // ── Search Bar ───────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: HfColors.field,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: HfColors.border),
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                style: GoogleFonts.inter(fontSize: 14, color: HfColors.navy),
+                decoration: InputDecoration(
+                  hintText: 'Search customer, job, or message...',
+                  hintStyle:
+                      GoogleFonts.inter(fontSize: 13, color: HfColors.muted),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      size: 20, color: HfColors.muted),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Active Customers Story Reel ──────────────────────────
+          SizedBox(
+            height: 84,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              children: [
+                for (final chat in _allChats.where((c) => c.isOnline))
+                  InkWell(
+                    onTap: () => _openChat(chat),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 72,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: chat.isActiveJob
+                                        ? HfColors.primary
+                                        : HfColors.border,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: ClipOval(
+                                  child: Image.network(
+                                    chat.avatarUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                      color: HfColors.primarySoft,
+                                      child: Center(
+                                        child: Text(
+                                          chat.customerName[0],
+                                          style: GoogleFonts.inter(
+                                            fontWeight: FontWeight.bold,
+                                            color: HfColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: HfColors.success,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            chat.customerName.split(' ').first,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: HfColors.navy,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // ── Filter Segment Chips ─────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Row(
+              children: [
+                _filterChip(0, 'All (${_allChats.length})'),
+                const SizedBox(width: 8),
+                _filterChip(1, 'Active Jobs (${_allChats.where((c) => c.isActiveJob).length})'),
+                const SizedBox(width: 8),
+                _filterChip(2, 'Unread ($totalUnread)'),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1, color: HfColors.border),
+
+          // ── Conversations List ───────────────────────────────────
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.chat_bubble_outline_rounded,
+                              size: 48, color: HfColors.muted),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No conversations found',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: HfColors.navy,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Try a different search or filter setting',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: HfColors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          OutlinedButton(
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _selectedFilter = 0;
+                              });
+                            },
+                            child: const Text('Reset Filters'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                    itemCount: filtered.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final chat = filtered[index];
+                      return _buildChatCard(chat);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip(int index, String label) {
+    final isSelected = _selectedFilter == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedFilter = index),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? HfColors.primary : HfColors.field,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? HfColors.primary : HfColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? Colors.white : HfColors.grey,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatCard(CustomerChatItem chat) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: chat.unreadCount > 0
+              ? HfColors.primary.withValues(alpha: 0.35)
+              : HfColors.border,
+          width: chat.unreadCount > 0 ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _openChat(chat),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar with online status
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: chat.unreadCount > 0
+                            ? HfColors.primary
+                            : HfColors.border,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: Image.network(
+                        chat.avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: HfColors.primarySoft,
+                          child: Center(
+                            child: Text(
+                              chat.customerName[0],
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: HfColors.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (chat.isOnline)
+                    Positioned(
+                      right: 1,
+                      bottom: 1,
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: HfColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // Chat content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top row: Name + Badge + Time
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            chat.customerName,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: chat.unreadCount > 0
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              color: HfColors.navy,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (chat.isActiveJob) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: HfColors.primarySoft,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              chat.bookingId,
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: HfColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        Text(
+                          chat.time,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: chat.unreadCount > 0
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: chat.unreadCount > 0
+                                ? HfColors.primary
+                                : HfColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    // Job title and location
+                    Text(
+                      '${chat.jobTitle} • ${chat.address}',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: HfColors.grey,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // Message snippet & unread count badge
+                    Row(
+                      children: [
+                        if (chat.unreadCount == 0)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 4),
+                            child: Icon(Icons.done_all_rounded,
+                                size: 15, color: HfColors.primary),
+                          ),
+                        Expanded(
+                          child: Text(
+                            chat.lastMessage,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: chat.unreadCount > 0
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: chat.unreadCount > 0
+                                  ? HfColors.navy
+                                  : HfColors.muted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (chat.unreadCount > 0) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: HfColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${chat.unreadCount}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              // Quick Phone Call button
+              IconButton(
+                onPressed: () =>
+                    hfSnack(context, 'Calling ${chat.customerName}...'),
+                icon: const Icon(Icons.phone_outlined,
+                    size: 20, color: HfColors.primary),
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 32, minHeight: 32),
+                tooltip: 'Call Customer',
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+typedef ProviderMessagesPlaceholder = ProviderMessagesScreen;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PROVIDER MORE / PLACEHOLDER ROUTE
@@ -2535,14 +3261,41 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
                 const SizedBox(width: 4),
-                // Avatar
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: HfColors.primarySoft,
-                  backgroundImage: user?.avatarUrl != null
-                      ? NetworkImage(user!.avatarUrl!)
-                      : const NetworkImage(
-                          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150'),
+                // Avatar / Profile icon
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: HfColors.primarySoft,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: HfColors.primary.withValues(alpha: 0.35),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                        ? Image.network(
+                            user.avatarUrl!,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Center(
+                              child: Icon(
+                                Icons.person_rounded,
+                                size: 22,
+                                color: HfColors.primary,
+                              ),
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.person_rounded,
+                              size: 22,
+                              color: HfColors.primary,
+                            ),
+                          ),
+                  ),
                 ),
               ],
             ),
