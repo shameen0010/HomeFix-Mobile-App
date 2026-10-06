@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/reset_password_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +25,9 @@ class HomeFixApp extends StatelessWidget {
       title: 'HomeFix',
       home: const SplashScreen(),
       routes: {
-        '/login': (_) => const Placeholder(), // replace with your login screen
+        '/login': (_) => const LoginScreen(),
+        '/signup': (_) => const SignupScreen(),
+        '/reset-password': (_) => const ResetPasswordScreen(),
       },
     );
   }
