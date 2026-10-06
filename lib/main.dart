@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/hf_theme.dart';
-import 'data/homefix_store.dart';
 import 'data/models.dart';
 import 'firebase_options.dart';
 import 'screens/auth_screens.dart';
@@ -12,6 +11,8 @@ import 'screens/booking_screens.dart';
 import 'screens/customer_additional_screens.dart';
 import 'screens/customer_screens.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/provider_onboard_screens.dart';
+import 'screens/provider_screens.dart';
 import 'screens/splash_screen.dart';
 
 Future<void> main() async {
@@ -155,6 +156,57 @@ final router = GoRouter(
     GoRoute(
       path: '/emergency-status',
       builder: (context, state) => const EmergencyStatusScreen(),
+    ),
+    // Provider onboarding flow
+    GoRoute(
+      path: '/provider-onboard/category',
+      builder: (context, state) => const SelectCategoryScreen(),
+    ),
+    GoRoute(
+      path: '/provider-onboard/complete',
+      builder: (context, state) {
+        final categories = state.extra as List<String>?;
+        return RegistrationCompleteScreen(selectedCategories: categories);
+      },
+    ),
+    // Provider main routes
+    GoRoute(
+      path: '/p',
+      builder: (context, state) => const ProviderShell(index: 0, child: ProviderDashboard()),
+      routes: [
+        GoRoute(
+          path: 'home',
+          builder: (context, state) => const ProviderShell(index: 0, child: ProviderDashboard()),
+        ),
+        GoRoute(
+          path: 'requests',
+          builder: (context, state) => const ProviderShell(index: 1, child: ProviderRequestsPlaceholder()),
+        ),
+        GoRoute(
+          path: 'schedule',
+          builder: (context, state) => const ProviderShell(index: 2, child: ProviderSchedulePlaceholder()),
+        ),
+        GoRoute(
+          path: 'messages',
+          builder: (context, state) => const ProviderShell(index: 3, child: ProviderMessagesPlaceholder()),
+        ),
+        GoRoute(
+          path: 'more',
+          builder: (context, state) => const ProviderShell(index: 4, child: ProviderMorePlaceholder()),
+        ),
+        GoRoute(
+          path: 'services',
+          builder: (context, state) => const ProviderShell(index: 0, child: ManageServicesScreen()),
+        ),
+        GoRoute(
+          path: 'availability',
+          builder: (context, state) => const ProviderShell(index: 0, child: ProviderAvailabilityScreen()),
+        ),
+        GoRoute(
+          path: 'chat',
+          builder: (context, state) => const ProviderChatScreen(),
+        ),
+      ],
     ),
   ],
 );
