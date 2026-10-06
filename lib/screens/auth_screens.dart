@@ -232,6 +232,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 if (role == UserRole.provider) {
                   context.go('/provider-onboard/category');
                 } else {
+                  ref.read(homefixStoreProvider.notifier).completeOnboarding();
                   context.go(homeFor(role));
                 }
               },
