@@ -6,6 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/hf_theme.dart';
 import '../core/widgets/hf_widgets.dart';
 import '../data/homefix_store.dart';
+import 'provider_execution_screens.dart';
+
+export 'provider_execution_screens.dart';
 
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -472,7 +475,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             customerName: 'Sarah Jenkins',
             jobTitle: 'Pipe Leakage Repair • Kitchen Sink',
             address: '742 Evergreen Terrace',
-            onViewDetails: () {},
+            onViewDetails: () => context.push('/p/active-service'),
           ),
           const SizedBox(height: 10),
 
@@ -485,7 +488,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             jobTitle: 'Drain Unclogging • Master Bathroom',
             address: '108 Park Ave, Apt 4B',
             price: '\$65.00 • Pay On-Site',
-            onViewDetails: () {},
+            onViewDetails: () => context.push('/p/booking-request'),
           ),
           const SizedBox(height: 20),
 
@@ -515,7 +518,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               _QuickAction(
                 icon: Icons.history_outlined,
                 label: 'Booking\nHistory',
-                onTap: () {},
+                onTap: () => context.push('/p/history'),
               ),
               _QuickAction(
                 icon: Icons.person_outline,
@@ -2344,7 +2347,7 @@ class _ChatBubble extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PROVIDER PLACEHOLDER SCREENS (for bottom nav routes not yet built)
+// PROVIDER PLACEHOLDER / ROUTE INTEGRATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 class ProviderRequestsPlaceholder extends StatelessWidget {
@@ -2352,25 +2355,7 @@ class ProviderRequestsPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.inbox_outlined, size: 48, color: HfColors.muted),
-            const SizedBox(height: 12),
-            Text('Booking Requests',
-                style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: HfColors.navy)),
-            const SizedBox(height: 4),
-            Text('No new requests at the moment.',
-                style: GoogleFonts.inter(fontSize: 13, color: HfColors.grey)),
-          ],
-        ),
-      ),
-    );
+    return const ProviderRequestsScreen();
   }
 }
 
@@ -2379,26 +2364,7 @@ class ProviderSchedulePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.calendar_today_outlined,
-                size: 48, color: HfColors.muted),
-            const SizedBox(height: 12),
-            Text('Schedule',
-                style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: HfColors.navy)),
-            const SizedBox(height: 4),
-            Text('Your schedule is clear today.',
-                style: GoogleFonts.inter(fontSize: 13, color: HfColors.grey)),
-          ],
-        ),
-      ),
-    );
+    return const ProviderScheduleScreen();
   }
 }
 

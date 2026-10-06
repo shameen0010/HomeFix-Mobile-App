@@ -222,6 +222,26 @@ final router = GoRouter(
           path: 'notifications',
           builder: (context, state) => const ProviderNotificationsScreen(),
         ),
+        GoRoute(
+          path: 'active-service',
+          builder: (context, state) => const ProviderActiveServiceScreen(),
+        ),
+        GoRoute(
+          path: 'job-receipt',
+          builder: (context, state) => const ProviderJobDetailsReceiptScreen(),
+        ),
+        GoRoute(
+          path: 'customer-details',
+          builder: (context, state) => const ProviderCustomerDetailsScreen(),
+        ),
+        GoRoute(
+          path: 'history',
+          builder: (context, state) => const ProviderBookingHistoryScreen(),
+        ),
+        GoRoute(
+          path: 'booking-request',
+          builder: (context, state) => const ProviderBookingRequestDetailScreen(),
+        ),
       ],
     ),
   ],
