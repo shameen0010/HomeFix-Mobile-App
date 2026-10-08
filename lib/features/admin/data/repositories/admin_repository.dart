@@ -290,12 +290,30 @@ class AdminRepository {
           if (status == 'completed' || status == 'cancelled') {
             throw AdminException('This booking is already $status.');
           }
+          // Read the slot lock BEFORE any write (transactions require reads first).
+          final d = snap.data() ?? <String, dynamic>{};
+          final pid = asString(d['providerId']);
+          final at = asDate(d['scheduledAt']);
+          String two(int n) => n.toString().padLeft(2, '0');
+          final slotRef = (pid.isEmpty || at == null || d['isEmergency'] == true)
+              ? null
+              : _db.collection('booking_slots').doc('${pid}_${at.year}${two(at.month)}${two(at.day)}');
+          final slotKey = at == null ? '' : '${two(at.hour)}${two(at.minute)}';
+          final slotSnap = slotRef == null ? null : await tx.get(slotRef);
+
           tx.update(ref, {
             'status': 'cancelled',
             'cancelReason': reason,
             'cancelledBy': 'admin',
             'cancelledAt': FieldValue.serverTimestamp(),
           });
+          final slots = slotSnap?.data()?['slots'];
+          if (slotRef != null && slotSnap != null && slotSnap.exists && slots is Map) {
+            final lock = slots[slotKey];
+            if (lock is Map && lock['bookingId'] == id) {
+              tx.update(slotRef, {'slots.$slotKey': FieldValue.delete()});
+            }
+          }
         });
       });
 
@@ -310,7 +328,7 @@ class AdminRepository {
           {required String status, String? resolution}) =>
       _guard(() => _disputes.doc(id).update({
             'status': status,
-        ...? (resolution == null ? null : {'resolution': resolution}),
+            if (resolution != null) 'resolution': resolution,
             'handledBy': currentAdminId,
             'handledAt': FieldValue.serverTimestamp(),
           }));
@@ -321,8 +339,8 @@ class AdminRepository {
         final monthStart = Timestamp.fromDate(DateTime(now.year, now.month));
 
         Future<int> count(Query<Map<String, dynamic>> q) async {
-          final snap = await q.get();
-          return snap.size;
+          final snap = await q.count().get();
+          return snap.count ?? 0;
         }
 
         final results = await Future.wait<int>([
