@@ -40,16 +40,10 @@ ThemeData? _cachedTheme;
 ThemeData get adminTheme => _cachedTheme ??= _buildTheme();
 
 ThemeData _buildTheme() {
-  final base = ThemeData(
+  return ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(seedColor: AdminColors.primary),
     scaffoldBackgroundColor: AdminColors.bg,
-  );
-  return base.copyWith(
-    textTheme: GoogleFonts.poppinsTextTheme(base.textTheme).apply(
-      bodyColor: AdminColors.dark,
-      displayColor: AdminColors.dark,
-    ),
     navigationBarTheme: const NavigationBarThemeData(
       backgroundColor: Colors.white,
       indicatorColor: AdminColors.chipBg,

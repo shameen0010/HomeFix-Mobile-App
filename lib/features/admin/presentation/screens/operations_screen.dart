@@ -154,7 +154,7 @@ class _OperationsScreenState extends State<OperationsScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         buildDefaultDragHandles: false,
                         itemCount: shown.length,
-                        onReorder: (o, n) => _reorder(all, o, n),
+                        onReorderItem: (o, n) => _reorder(all, o, n),
                         itemBuilder: (_, i) => _card(shown[i], i, draggable: true, all: all),
                       )
                     : Column(children: [

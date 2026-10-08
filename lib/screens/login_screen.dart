@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/homefix_store.dart';
 import '../data/models.dart';
-import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../widgets/auth_widgets.dart';
 import 'onboarding_screen.dart';
 
@@ -34,6 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_form.currentState!.validate()) return;
 
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final router = GoRouter.of(context);
     setState(() => _loading = true);
 
     try {
@@ -60,9 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
       if (role == 'admin') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AdminShell()),
-        );
+        router.go('/a/home');
       } else {
         final profile = await FirebaseFirestore.instance
             .collection('users')
@@ -89,18 +88,22 @@ class _LoginScreenState extends State<LoginScreen> {
               .collection('providers')
               .doc(user?.uid)
               .get();
+          if (!provider.exists) {
+            router.go('/provider-onboard/category');
+            return;
+          }
           final verificationStatus =
               (provider.data()?['verificationStatus'] ?? provider.data()?['status'] ?? 'pending').toString();
-          context.go(verificationStatus == 'approved'
+          router.go(verificationStatus == 'approved'
               ? '/p/home'
               : '/provider-onboard/pending');
         } else {
-          context.go('/c/home');
+          router.go('/c/home');
         }
       }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         SnackBar(
           content: Text(_authErrorMessage(error)),
           backgroundColor: Colors.redAccent,
@@ -108,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on FirebaseException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         SnackBar(
           content: Text('Could not load your profile: ${error.message}'),
           backgroundColor: Colors.redAccent,
@@ -117,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (error) {
       debugPrint('Login error: $error');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger?.showSnackBar(
         const SnackBar(
           content: Text('Something went wrong. Please try again.'),
           backgroundColor: Colors.redAccent,

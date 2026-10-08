@@ -130,7 +130,7 @@ void showAuditLogSheet(
                     }
                     return ListView.separated(
                       itemCount: items.length,
-                      separatorBuilder: (_, __) => const Divider(height: 16),
+                      separatorBuilder: (_, _) => const Divider(height: 16),
                       itemBuilder: (_, i) {
                         final e = items[i];
                         return Column(

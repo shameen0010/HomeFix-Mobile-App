@@ -112,16 +112,19 @@ class ReportExporter {
       final data = excel.encode();
       if (data == null) throw AdminException('Could not build the Excel file.');
       final name = 'homefix_report_${_stamp(r)}.xlsx';
-      await Share.shareXFiles(
-        [
-          XFile.fromData(
-            Uint8List.fromList(data),
-            name: name,
-            mimeType:
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          )
-        ],
-        fileNameOverrides: [name],
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            XFile.fromData(
+              Uint8List.fromList(data),
+              name: name,
+              mimeType:
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            )
+          ],
+          subject: 'HomeFix Report',
+          fileNameOverrides: [name],
+        ),
       );
     } on AdminException {
       rethrow;

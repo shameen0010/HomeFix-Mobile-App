@@ -310,7 +310,7 @@ class AdminRepository {
           {required String status, String? resolution}) =>
       _guard(() => _disputes.doc(id).update({
             'status': status,
-            if (resolution != null) 'resolution': resolution,
+        ...? (resolution == null ? null : {'resolution': resolution}),
             'handledBy': currentAdminId,
             'handledAt': FieldValue.serverTimestamp(),
           }));
@@ -321,8 +321,8 @@ class AdminRepository {
         final monthStart = Timestamp.fromDate(DateTime(now.year, now.month));
 
         Future<int> count(Query<Map<String, dynamic>> q) async {
-          final snap = await q.count().get();
-          return snap.count ?? 0;
+          final snap = await q.get();
+          return snap.size;
         }
 
         final results = await Future.wait<int>([

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 import 'admin_feedback.dart';
 import 'admin_format.dart';
@@ -101,14 +103,42 @@ class AdminHeader extends StatelessWidget {
             onPressed: () => showAdminSnack(context, 'No new notifications'),
             icon: const Icon(Icons.notifications_none_rounded),
           ),
-          const CircleAvatar(
-            radius: 17,
-            backgroundColor: AdminColors.primary,
-            child: Icon(Icons.person, color: Colors.white, size: 18),
+          IconButton(
+            tooltip: 'Log out',
+            onPressed: () => _logout(context),
+            icon: const CircleAvatar(
+              radius: 17,
+              backgroundColor: AdminColors.primary,
+              child: Icon(Icons.person, color: Colors.white, size: 18),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    final confirmed = await confirmAction(
+      context,
+      title: 'Log out of admin account?',
+      message: 'You will need to sign in again to access the admin dashboard.',
+      confirmLabel: 'Log out',
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    try {
+      await FirebaseAuth.instance.signOut();
+      if (context.mounted) context.go('/login');
+    } on FirebaseAuthException catch (error) {
+      if (context.mounted) {
+        showAdminSnack(
+          context,
+          error.message ?? 'Could not log out. Please try again.',
+          error: true,
+        );
+      }
+    }
   }
 }
 
@@ -204,7 +234,7 @@ class AdminAvatar extends StatelessWidget {
           radius: radius,
           backgroundColor: AdminColors.chipBg,
           backgroundImage: hasPhoto ? NetworkImage(photoUrl!) : null,
-          onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+          onBackgroundImageError: hasPhoto ? (_, _) {} : null,
           child: hasPhoto
               ? null
               : Text(initials(name),
@@ -482,7 +512,7 @@ class InfoField extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
+          ...trailing == null ? const <Widget>[] : [trailing!],
         ],
       ),
     );
@@ -529,9 +559,9 @@ class StatCard extends StatelessWidget {
           ]),
           const SizedBox(height: 8),
           Text(value, style: ts(22, w: FontWeight.w700)),
-          if (caption != null)
-            Text(caption!,
-                style: ts(11, color: toneColor(captionTone))),
+          ...caption == null
+              ? const <Widget>[]
+              : [Text(caption!, style: ts(11, color: toneColor(captionTone)))],
         ],
       ),
     );
@@ -554,7 +584,7 @@ class SectionTitle extends StatelessWidget {
         const SizedBox(width: 8),
       ],
       Expanded(child: Text(text, style: ts(15, w: FontWeight.w700))),
-      if (trailing != null) trailing!,
+      ...trailing == null ? const <Widget>[] : [trailing!],
     ]);
   }
 }
