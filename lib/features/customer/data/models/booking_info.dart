@@ -32,6 +32,14 @@ class BookingInfo {
     this.finishedAt,
     this.customerAttestedAt,
     this.cancelReason,
+    this.notes = '',
+    this.guaranteeFee = 0,
+    this.requestPhotos = const [],
+    this.createdAt,
+    this.expiresAt,
+    this.acceptedAt,
+    this.startedAt,
+    this.cancelComments,
   });
 
   final String id, bookingNo, title, category, customerId, customerName, providerId, providerName, address, status, stage;
@@ -39,12 +47,34 @@ class BookingInfo {
   final bool isEmergency, providerConfirmed, customerAttested, reviewed;
   final List<ProofPhoto> photos;
   final DateTime? scheduledAt, completedAt, finishedAt, customerAttestedAt;
-  final String? cancelReason;
+  final String? cancelReason, cancelComments;
+  final String notes;
+  final double guaranteeFee;
+  final List<ProofPhoto> requestPhotos;
+  final DateTime? createdAt, expiresAt, acceptedAt, startedAt;
 
   String get code => '#HF-$bookingNo';
   bool get isActive => status == 'pending' || status == 'confirmed' || status == 'in_progress';
   bool get jobDone => stage == 'done' || status == 'completed';
   bool get hasProvider => providerId.isNotEmpty;
+  bool get canCancel => status == 'pending' || status == 'confirmed';
+  bool get canReschedule => canCancel && !isEmergency;
+
+  /// 0 pending, 1 confirmed, 2 on the way / working, 3 done.
+  int get trackStep {
+    if (status == 'completed' || stage == 'done' && status == 'in_progress') return 3;
+    if (status == 'in_progress') return 2;
+    if (status == 'confirmed') return 1;
+    return 0;
+  }
+
+  /// Emergency tracker: 0 sent, 1 accepted, 2 on the way, 3 service started, 4 completed.
+  int get emergencyStep {
+    if (status == 'completed' || (status == 'in_progress' && stage == 'done')) return 4;
+    if (status == 'in_progress') return (stage == 'arrived' || stage == 'working') ? 3 : 2;
+    if (status == 'confirmed') return 2;
+    return 1;
+  }
 
   String get stageLabel {
     switch (stage) {
@@ -87,6 +117,17 @@ class BookingInfo {
       finishedAt: asDate(d['finishedAt']),
       customerAttestedAt: asDate(d['customerAttestedAt']),
       cancelReason: d['cancelReason'] as String?,
+      cancelComments: d['cancelComments'] as String?,
+      notes: asString(d['notes']),
+      guaranteeFee: asDouble(d['guaranteeFee']),
+      requestPhotos: (d['requestPhotos'] as List? ?? const [])
+          .whereType<Map>()
+          .map((m) => ProofPhoto(url: asString(m['url']), label: asString(m['label'], 'Photo')))
+          .toList(),
+      createdAt: asDate(d['createdAt']),
+      expiresAt: asDate(d['expiresAt']),
+      acceptedAt: asDate(d['acceptedAt']),
+      startedAt: asDate(d['startedAt']),
     );
   }
 }
