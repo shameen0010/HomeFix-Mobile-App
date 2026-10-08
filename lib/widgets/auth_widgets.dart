@@ -78,7 +78,7 @@ class AuthCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 16,
                 offset: const Offset(0, 4)),
           ],
@@ -99,7 +99,7 @@ class FieldLabel extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(text, style: poppins(12, w: FontWeight.w600)),
-            if (trailing != null) trailing!,
+            if (trailing case final trailingWidget?) trailingWidget,
           ],
         ),
       );
@@ -219,7 +219,7 @@ class PrimaryButton extends StatelessWidget {
           onPressed: loading ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: color,
-            disabledBackgroundColor: color.withOpacity(0.7),
+            disabledBackgroundColor: color.withValues(alpha: 0.7),
             foregroundColor: Colors.white,
             elevation: 0,
             shape:
@@ -322,7 +322,7 @@ class HeroBadge extends StatelessWidget {
             decoration: BoxDecoration(
               shape: shape,
               borderRadius: circle ? null : BorderRadius.circular(26),
-              color: AppColors.primary.withOpacity(0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
             ),
           ),
           Container(
@@ -334,7 +334,7 @@ class HeroBadge extends StatelessWidget {
               color: AppColors.primary,
               boxShadow: [
                 BoxShadow(
-                    color: AppColors.primary.withOpacity(0.35),
+                    color: AppColors.primary.withValues(alpha: 0.35),
                     blurRadius: 18,
                     offset: const Offset(0, 6)),
               ],
