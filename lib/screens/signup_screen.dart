@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../widgets/auth_widgets.dart';
 import 'onboarding_screen.dart';
@@ -75,10 +76,14 @@ class _SignupScreenState extends State<SignupScreen> {
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created. You can now log in.')),
-      );
-      Navigator.of(context).pushReplacementNamed('/login');
+      if (_role == SignupRole.servicePartner) {
+        context.go('/provider-onboard/category');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created. You can now log in.')),
+        );
+        context.go('/login');
+      }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -147,7 +152,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: Column(
           children: [
             AuthHeader(
-              onBack: () => Navigator.of(context).pushReplacementNamed('/login'),
+              onBack: () => context.go('/login'),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -336,8 +341,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             Text('Already have an account?  ',
                                 style: poppins(13, color: AppColors.grey)),
                             GestureDetector(
-                              onTap: () => Navigator.of(context)
-                                  .pushReplacementNamed('/login'),
+                              onTap: () =>                               context.go('/login'),
                               child: Text('Log In',
                                   style: poppins(13,
                                       color: AppColors.primary,
