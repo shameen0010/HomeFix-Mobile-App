@@ -284,6 +284,21 @@ class ProviderRepository {
           if (d['providerId'] != me || d['status'] != 'pending') {
             throw AdminException('This request can no longer be declined.');
           }
+          // Release the customer's slot lock (booking_slots) so the time can be booked again.
+          final at = asDate(d['scheduledAt']);
+          String two(int n) => n.toString().padLeft(2, '0');
+          final slotRef = (at == null || d['isEmergency'] == true)
+              ? null
+              : _db.collection('booking_slots').doc('${me}_${at.year}${two(at.month)}${two(at.day)}');
+          final slotKey = at == null ? '' : '${two(at.hour)}${two(at.minute)}';
+          final slotSnap = slotRef == null ? null : await tx.get(slotRef);
+          final slots = slotSnap?.data()?['slots'];
+          if (slotRef != null && slotSnap != null && slotSnap.exists && slots is Map) {
+            final lock = slots[slotKey];
+            if (lock is Map && lock['bookingId'] == id) {
+              tx.update(slotRef, {'slots.$slotKey': FieldValue.delete()});
+            }
+          }
           tx.update(ref, {
             'providerId': FieldValue.delete(),
             'providerName': FieldValue.delete(),

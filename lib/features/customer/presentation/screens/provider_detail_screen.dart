@@ -4,7 +4,6 @@ import '../../../provider/data/models/provider_profile.dart';
 import '../../../provider/data/models/review_model.dart';
 import '../../../provider/data/models/service_item.dart';
 import '../../core/customer_ui.dart';
-import '../../data/models/customer_profile.dart';
 import '../../data/repositories/customer_repository.dart';
 import '../widgets/availability.dart';
 import '../widgets/customer_actions.dart';
@@ -27,22 +26,20 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
   late final Stream<List<ReviewModel>> _reviews = _repo.watchReviews(widget.providerId);
   late final Stream<Set<String>> _favorites = _repo.watchFavorites();
   ServiceItem? _selected;
-  bool _reserved = false;
 
-  Future<void> _reserve(ProviderProfile p) async {
+  /// Scheduled bookings go through checkout -> summary -> success; emergency requests
+  /// reuse the emergency form and skip the provider list.
+  void _reserve(ProviderProfile p) {
     final s = _selected;
     if (s == null) {
       showAdminSnack(context, 'Select a service first.', error: true);
       return;
     }
-    final ok = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _ReserveSheet(provider: p, service: s, emergency: widget.emergency),
-    );
-    if (ok == true && mounted) setState(() => _reserved = true);
+    if (widget.emergency) {
+      openEmergency(context, presetProviderId: p.id);
+    } else {
+      openCheckout(context, p, s);
+    }
   }
 
   @override
@@ -144,7 +141,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: GestureDetector(
-                    onTap: _reserved ? null : () => setState(() => _selected = s),
+                    onTap: () => setState(() => _selected = s),
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -298,177 +295,21 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
       );
 
   Widget _bottomBar(ProviderProfile p) {
-    final label = _reserved
-        ? 'Slot Reserved'
-        : _selected == null
-            ? 'Select a service'
-            : widget.emergency
-                ? 'Request Emergency Booking'
-                : 'Reserve Slot';
+    final label = _selected == null
+        ? 'Select a service'
+        : widget.emergency
+            ? 'Request Emergency Booking'
+            : 'Reserve Slot';
     return Container(
       padding: EdgeInsets.fromLTRB(16, 10, 16, 12 + MediaQuery.of(context).viewPadding.bottom),
       decoration: const BoxDecoration(color: Colors.white, boxShadow: [
         BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, -2)),
       ]),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        AdminButton(label,
-            kind: ButtonKind.filled,
-            icon: _reserved ? Icons.check_circle_outline_rounded : null,
-            height: 50,
-            onPressed: _reserved || _selected == null ? null : () => _reserve(p)),
-        if (_reserved)
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).popUntil((r) => r.isFirst);
-              CustomerNav.goTab(2);
-            },
-            child: const Text('View my bookings'),
-          ),
-      ]),
-    );
-  }
-}
-
-class _ReserveSheet extends StatefulWidget {
-  const _ReserveSheet({required this.provider, required this.service, required this.emergency});
-  final ProviderProfile provider;
-  final ServiceItem service;
-  final bool emergency;
-
-  @override
-  State<_ReserveSheet> createState() => _ReserveSheetState();
-}
-
-class _ReserveSheetState extends State<_ReserveSheet> {
-  final _repo = CustomerRepository.instance;
-  final _key = GlobalKey<FormState>();
-  final _address = TextEditingController();
-  final _notes = TextEditingController();
-  DateTime _date = DateTime.now().add(const Duration(days: 1));
-  TimeOfDay _time = const TimeOfDay(hour: 10, minute: 0);
-  List<SavedAddress> _saved = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    _repo.getAddresses().then((l) {
-      if (!mounted) return;
-      setState(() {
-        _saved = l;
-        final def = l.where((a) => a.isDefault).toList();
-        if (def.isNotEmpty) _address.text = def.first.address;
-      });
-    }).catchError((Object _) {});
-  }
-
-  @override
-  void dispose() {
-    _address.dispose();
-    _notes.dispose();
-    super.dispose();
-  }
-
-  DateTime get _when => widget.emergency
-      ? DateTime.now().add(const Duration(minutes: 30))
-      : DateTime(_date.year, _date.month, _date.day, _time.hour, _time.minute);
-
-  Future<void> _submit() async {
-    if (!_key.currentState!.validate()) return;
-    if (!widget.emergency) {
-      final err = validateSlot(widget.provider, _when);
-      if (err != null) {
-        showAdminSnack(context, err, error: true);
-        return;
-      }
-    }
-    final ok = await runAdminAction(
-      context,
-      () => _repo.createBooking(
-        provider: widget.provider,
-        service: widget.service,
-        scheduledAt: _when,
-        address: _address.text,
-        notes: _notes.text,
-        emergency: widget.emergency,
-      ),
-      success: widget.emergency ? 'Emergency request sent' : 'Slot reserved. Waiting for confirmation.',
-    );
-    if (ok && mounted) Navigator.pop(context, true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _key,
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.emergency ? 'Emergency booking' : 'Reserve a slot', style: ts(18, w: FontWeight.w700)),
-            Text('${widget.service.name} with ${widget.provider.name}  |  ${formatMoney(widget.service.price)}${widget.service.priceType == 'hourly' ? '/hr' : ''} cash',
-                style: ts(11.5, color: AdminColors.grey)),
-            const SizedBox(height: 14),
-            if (widget.emergency)
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AdminColors.redBg, borderRadius: BorderRadius.circular(12)),
-                child: Text('The provider is alerted immediately and has 15 minutes to accept. Target arrival: about 30 minutes.',
-                    style: ts(11.5, color: const Color(0xFF7F1D1D))),
-              )
-            else
-              Row(children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final d = await showDatePicker(
-                          context: context,
-                          initialDate: _date,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 90)));
-                      if (d != null) setState(() => _date = d);
-                    },
-                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                    label: Text(formatDate(_date, 'EEE, MMM d')),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final t = await showTimePicker(context: context, initialTime: _time);
-                      if (t != null) setState(() => _time = t);
-                    },
-                    icon: const Icon(Icons.schedule_rounded, size: 16),
-                    label: Text(_time.format(context)),
-                  ),
-                ),
-              ]),
-            const SizedBox(height: 12),
-            if (_saved.isNotEmpty)
-              Wrap(spacing: 8, children: [
-                for (final a in _saved)
-                  ActionChip(label: Text(a.label), onPressed: () => setState(() => _address.text = a.address)),
-              ]),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _address,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Service address', border: OutlineInputBorder()),
-              validator: (v) => (v == null || v.trim().length < 5) ? 'Enter the full address' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _notes,
-              maxLines: 2,
-              maxLength: 200,
-              decoration: const InputDecoration(labelText: 'Notes for the provider (optional)', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 8),
-            AdminButton(widget.emergency ? 'Send emergency request' : 'Confirm reservation',
-                kind: ButtonKind.filled, height: 50, onPressed: _submit),
-          ]),
-        ),
-      ),
+      child: AdminButton(label,
+          kind: ButtonKind.filled,
+          icon: widget.emergency ? Icons.bolt_rounded : Icons.event_available_outlined,
+          height: 50,
+          onPressed: _selected == null ? null : () => _reserve(p)),
     );
   }
 }

@@ -11,6 +11,8 @@ import '../../../provider/data/models/provider_profile.dart';
 import '../../../provider/data/models/review_model.dart';
 import '../../../provider/data/models/service_item.dart';
 import '../../core/customer_ui.dart';
+import '../../presentation/widgets/availability.dart';
+import '../models/booking_draft.dart';
 import '../models/booking_info.dart';
 import '../models/customer_chat.dart';
 import '../models/customer_profile.dart';
@@ -216,7 +218,41 @@ class CustomerRepository {
   Stream<BookingInfo?> watchBooking(String id) =>
       _bookings.doc(id).snapshots().map((d) => d.exists ? BookingInfo.fromDoc(d) : null);
 
-  /// Creates the booking and notifies the provider in ONE batch.
+  CollectionReference<Map<String, dynamic>> get _slots => _db.collection('booking_slots');
+
+  /// Active services of a provider (one-shot read, used by the emergency flow).
+  Future<List<ServiceItem>> getServices(String providerId) => _guard(() async {
+        final s = await _providers.doc(providerId).collection('services').get();
+        return s.docs.map(ServiceItem.fromDoc).where((x) => x.isActive).toList()
+          ..sort((a, b) => a.price.compareTo(b.price));
+      });
+
+  /// Slots already taken on [day] for a provider (drives the arrival-window chips).
+  Stream<DayLoad> watchDayLoad(String providerId, DateTime day) => _slots
+      .doc(slotDayIdOf(providerId, day))
+      .snapshots()
+      .map((d) {
+        final raw = d.data()?['slots'];
+        return DayLoad(taken: raw is Map ? raw.keys.map((k) => k.toString()).toSet() : <String>{});
+      });
+
+  String? _slotProblem(ProviderProfile p, DateTime at) {
+    final err = validateSlot(p, at);
+    if (err != null) return err;
+    final now = DateTime.now();
+    final sameDay = at.year == now.year && at.month == now.month && at.day == now.day;
+    if (sameDay && !p.acceptsSameDay) return '${p.name} does not accept same-day bookings.';
+    return null;
+  }
+
+  Map<String, dynamic> _slotsOf(DocumentSnapshot<Map<String, dynamic>> s) {
+    final raw = s.data()?['slots'];
+    return raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+  }
+
+  /// Creates the booking, its slot lock and the provider notification in ONE transaction.
+  /// Standard bookings are validated against the provider's schedule, vacation, same-day
+  /// rule, maxJobs per day and an exclusive slot lock (no double booking).
   Future<String> createBooking({
     required ProviderProfile provider,
     required ServiceItem service,
@@ -224,60 +260,182 @@ class CustomerRepository {
     required String address,
     String? notes,
     bool emergency = false,
+    List<Uint8List> photos = const [],
   }) =>
       _guard(() async {
         final me = _requireUid();
-        final pSnap = await _providers.doc(provider.id).get();
-        final pd = pSnap.data();
-        if (!pSnap.exists || pd?['status'] != 'approved') {
-          throw AdminException('This provider is not accepting bookings right now.');
-        }
-        if (pd?['catalogActive'] == false) {
-          throw AdminException('This provider has paused new bookings.');
-        }
-        final u = (await _users.doc(me).get()).data() ?? <String, dynamic>{};
+        if (address.trim().length < 5) throw AdminException('Enter the full service address.');
         final ref = _bookings.doc();
-        final no = (DateTime.now().millisecondsSinceEpoch % 90000 + 10000).toString();
-        final now = DateTime.now();
-        final batch = _db.batch();
-        batch.set(ref, {
-          'bookingNo': no,
-          'title': service.name,
-          'category': service.category,
-          'customerId': me,
-          'customerName': u['name'] ?? _auth.currentUser?.displayName ?? 'Customer',
-          'customerPhone': u['phone'] ?? '',
-          'customerPhotoUrl': u['photoUrl'],
-          'providerId': provider.id,
-          'providerName': provider.name,
-          'address': address.trim(),
-          'notes': notes?.trim(),
-          'status': 'pending',
-          'isEmergency': emergency,
-          'amount': service.price,
-          'description': service.category,
-          'estimatedMin': service.durationMin,
-          'estimatedMax': service.durationMax,
-          'customerSince': u['createdAt'],
-          'accessInstructions': _accessText(u),
-          'scheduledAt': Timestamp.fromDate(scheduledAt),
-          'createdAt': FieldValue.serverTimestamp(),
-          if (emergency) 'expiresAt': Timestamp.fromDate(now.add(const Duration(minutes: 15))),
-        });
-        batch.set(_notifications.doc(), {
-          'userId': provider.id,
-          'type': emergency ? 'urgent' : 'booking',
-          'title': emergency ? 'New Urgent Request nearby!' : 'New booking request',
-          'body': '${service.name} at ${address.trim()}. Estimated cash payout ${formatMoney(service.price)}.',
-          'jobId': ref.id,
-          'read': false,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await batch.commit();
+        final uploaded = <Reference>[];
+        final photoDocs = <Map<String, dynamic>>[];
+        try {
+          for (var i = 0; i < photos.length && i < 4; i++) {
+            final r = FirebaseStorage.instance.ref('bookings/${ref.id}/request_$i.jpg');
+            await r.putData(photos[i], SettableMetadata(contentType: 'image/jpeg'));
+            uploaded.add(r);
+            photoDocs.add({'url': await r.getDownloadURL(), 'label': 'Customer photo ${i + 1}'});
+          }
+          await _db.runTransaction((tx) async {
+            final pSnap = await tx.get(_providers.doc(provider.id));
+            final pd = pSnap.data();
+            if (!pSnap.exists || pd?['status'] != 'approved') {
+              throw AdminException('This provider is not accepting bookings right now.');
+            }
+            if (pd?['catalogActive'] == false) throw AdminException('This provider has paused new bookings.');
+            final fresh = ProviderProfile.fromDoc(pSnap);
+            final uSnap = await tx.get(_users.doc(me));
+            final u = uSnap.data() ?? <String, dynamic>{};
+
+            DocumentReference<Map<String, dynamic>>? dayRef;
+            final key = slotKeyOf(scheduledAt);
+            if (emergency) {
+              if (!fresh.emergencyEnabled || !fresh.isOnline) {
+                throw AdminException('${fresh.name} is not taking emergency calls right now.');
+              }
+            } else {
+              final err = _slotProblem(fresh, scheduledAt);
+              if (err != null) throw AdminException(err);
+              dayRef = _slots.doc(slotDayIdOf(provider.id, scheduledAt));
+              final slots = _slotsOf(await tx.get(dayRef));
+              if (slots.containsKey(key)) {
+                throw AdminException('That arrival window was just taken. Please pick another time.');
+              }
+              final max = fresh.schedule[ProviderConfig.days[scheduledAt.weekday - 1]]?.maxJobs ?? 4;
+              if (slots.length >= max) throw AdminException('${fresh.name} is fully booked on that day.');
+            }
+
+            final quote = emergency ? PriceQuote.emergency(service, fresh) : PriceQuote.scheduled(service);
+            final no = (DateTime.now().millisecondsSinceEpoch % 90000 + 10000).toString();
+            tx.set(ref, {
+              'bookingNo': no,
+              'title': service.name,
+              'category': service.category,
+              'customerId': me,
+              'customerName': u['name'] ?? _auth.currentUser?.displayName ?? 'Customer',
+              'customerPhone': u['phone'] ?? '',
+              'customerPhotoUrl': u['photoUrl'],
+              'providerId': provider.id,
+              'providerName': fresh.name,
+              'address': address.trim(),
+              'notes': notes?.trim(),
+              'status': 'pending',
+              'isEmergency': emergency,
+              'amount': quote.total,
+              'serviceAmount': quote.service,
+              'guaranteeFee': quote.fee,
+              'description': service.category,
+              'estimatedMin': service.durationMin,
+              'estimatedMax': service.durationMax,
+              'customerSince': u['createdAt'],
+              'accessInstructions': _accessText(u),
+              'requestPhotos': photoDocs,
+              'scheduledAt': Timestamp.fromDate(scheduledAt),
+              'createdAt': FieldValue.serverTimestamp(),
+              if (emergency) 'expiresAt': Timestamp.fromDate(DateTime.now().add(const Duration(minutes: 15))),
+            });
+            if (dayRef != null) {
+              tx.set(
+                  dayRef,
+                  {
+                    'providerId': provider.id,
+                    'day': dayStrOf(scheduledAt),
+                    'slots': {key: {'bookingId': ref.id, 'customerId': me}},
+                  },
+                  SetOptions(merge: true));
+            }
+            tx.set(_notifications.doc(), {
+              'userId': provider.id,
+              'type': emergency ? 'urgent' : 'booking',
+              'title': emergency ? 'New Urgent Request nearby!' : 'New booking request',
+              'body': '${service.name} at ${address.trim()}. Estimated cash payout ${formatMoney(quote.total)}.',
+              'jobId': ref.id,
+              'read': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          });
+        } catch (_) {
+          for (final r in uploaded) {
+            try {
+              await r.delete();
+            } catch (_) {}
+          }
+          rethrow;
+        }
         return ref.id;
       });
 
-  Future<void> cancelBooking(String id, String reason) => _guard(() async {
+  /// Moves a pending/confirmed booking to a new arrival window. Releases the old slot,
+  /// locks the new one and sends the booking back to 'pending' so the provider re-accepts.
+  Future<void> rescheduleBooking(String id, DateTime newAt) => _guard(() async {
+        final me = _requireUid();
+        final ref = _bookings.doc(id);
+        await _db.runTransaction((tx) async {
+          final s = await tx.get(ref);
+          if (!s.exists) throw AdminException('Booking not found.');
+          final d = s.data()!;
+          if (d['customerId'] != me) throw AdminException('This booking belongs to another account.');
+          if (d['status'] != 'pending' && d['status'] != 'confirmed') {
+            throw AdminException('This booking can no longer be rescheduled (${d['status']}).');
+          }
+          if (d['isEmergency'] == true) throw AdminException('Emergency requests cannot be rescheduled.');
+          final pid = asString(d['providerId']);
+          if (pid.isEmpty) throw AdminException('Wait until a provider is assigned before rescheduling.');
+          final oldAt = asDate(d['scheduledAt']);
+          final pSnap = await tx.get(_providers.doc(pid));
+          if (!pSnap.exists) throw AdminException('This provider is no longer available.');
+          final fresh = ProviderProfile.fromDoc(pSnap);
+          final err = _slotProblem(fresh, newAt);
+          if (err != null) throw AdminException(err);
+
+          final newRef = _slots.doc(slotDayIdOf(pid, newAt));
+          final oldRef = oldAt == null ? null : _slots.doc(slotDayIdOf(pid, oldAt));
+          final sameDoc = oldRef != null && oldRef.path == newRef.path;
+          final newSnap = await tx.get(newRef);
+          final oldSnap = (oldRef == null || sameDoc) ? null : await tx.get(oldRef);
+          final newKey = slotKeyOf(newAt);
+          final oldKey = oldAt == null ? '' : slotKeyOf(oldAt);
+
+          final slots = _slotsOf(newSnap);
+          if (sameDoc) {
+            final mine = slots[oldKey];
+            if (mine is Map && mine['bookingId'] == id) slots.remove(oldKey);
+          }
+          if (slots.containsKey(newKey)) {
+            throw AdminException('That arrival window is already taken. Please pick another time.');
+          }
+          final max = fresh.schedule[ProviderConfig.days[newAt.weekday - 1]]?.maxJobs ?? 4;
+          if (slots.length >= max) throw AdminException('${fresh.name} is fully booked on that day.');
+          slots[newKey] = {'bookingId': id, 'customerId': me};
+
+          if (oldSnap != null && oldSnap.exists) {
+            final old = _slotsOf(oldSnap)[oldKey];
+            if (old is Map && old['bookingId'] == id) {
+              tx.update(oldRef!, {'slots.$oldKey': FieldValue.delete()});
+            }
+          }
+          tx.set(newRef, {'providerId': pid, 'day': dayStrOf(newAt), 'slots': slots});
+          tx.update(ref, {
+            'scheduledAt': Timestamp.fromDate(newAt),
+            'status': 'pending',
+            'acceptedAt': FieldValue.delete(),
+            if (oldAt != null) 'previousScheduledAt': Timestamp.fromDate(oldAt),
+            'rescheduledAt': FieldValue.serverTimestamp(),
+          });
+          tx.set(_notifications.doc(), {
+            'userId': pid,
+            'type': 'booking',
+            'title': 'Booking rescheduled',
+            'body': '${d['customerName'] ?? 'A customer'} moved ${d['title'] ?? 'a booking'} to '
+                '${formatDate(newAt, 'EEE, MMM d, h:mm a')}. Please accept again.',
+            'jobId': id,
+            'read': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        });
+      });
+
+  /// Cancels (pending/confirmed only), releases the provider's slot and notifies them.
+  Future<void> cancelBooking(String id, String reason, {String? comments}) => _guard(() async {
         final ref = _bookings.doc(id);
         final me = _requireUid();
         await _db.runTransaction((tx) async {
@@ -288,12 +446,36 @@ class CustomerRepository {
           if (d['status'] != 'pending' && d['status'] != 'confirmed') {
             throw AdminException('This booking can no longer be cancelled (${d['status']}).');
           }
+          final pid = asString(d['providerId']);
+          final at = asDate(d['scheduledAt']);
+          final dayRef = (pid.isNotEmpty && at != null && d['isEmergency'] != true)
+              ? _slots.doc(slotDayIdOf(pid, at))
+              : null;
+          final daySnap = dayRef == null ? null : await tx.get(dayRef);
+
           tx.update(ref, {
             'status': 'cancelled',
             'cancelReason': reason,
+            if (comments != null && comments.trim().isNotEmpty) 'cancelComments': comments.trim(),
             'cancelledBy': 'customer',
             'cancelledAt': FieldValue.serverTimestamp(),
           });
+          if (dayRef != null && daySnap != null && daySnap.exists && at != null) {
+            final key = slotKeyOf(at);
+            final mine = _slotsOf(daySnap)[key];
+            if (mine is Map && mine['bookingId'] == id) tx.update(dayRef, {'slots.$key': FieldValue.delete()});
+          }
+          if (pid.isNotEmpty) {
+            tx.set(_notifications.doc(), {
+              'userId': pid,
+              'type': 'booking',
+              'title': 'Booking cancelled',
+              'body': '${d['customerName'] ?? 'The customer'} cancelled ${d['title'] ?? 'a booking'}. Reason: $reason',
+              'jobId': id,
+              'read': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          }
         });
       });
 

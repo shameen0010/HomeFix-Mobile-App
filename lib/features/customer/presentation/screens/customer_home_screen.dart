@@ -7,6 +7,7 @@ import '../../data/models/booking_info.dart';
 import '../../data/models/customer_profile.dart';
 import '../../data/repositories/customer_repository.dart';
 import '../../../admin/presentation/widgets/category_style.dart';
+import '../widgets/customer_actions.dart';
 import '../widgets/customer_header.dart';
 import '../widgets/provider_cards.dart';
 
@@ -162,7 +163,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Expanded(child: Text('Fast dispatch on duty', style: ts(11, w: FontWeight.w600, color: const Color(0xFF92400E)))),
             AdminButton('Emergency Booking',
                 kind: ButtonKind.filled, icon: Icons.arrow_forward_rounded, height: 38,
-                onPressed: () => CustomerNav.goSearch(availableToday: true, emergency: true)),
+                onPressed: () => openEmergency(context)),
           ]),
         ]),
       );
@@ -171,7 +172,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         stream: _bookings,
         builder: (context, snap) {
           final active = (snap.data ?? const <BookingInfo>[])
-              .where((b) => b.status == 'confirmed' || b.status == 'in_progress')
+              .where((b) => b.status == 'pending' || b.status == 'confirmed' || b.status == 'in_progress')
               .toList();
           if (active.isEmpty) return const SizedBox.shrink();
           active.sort((a, b) => (a.scheduledAt ?? DateTime(2100)).compareTo(b.scheduledAt ?? DateTime(2100)));
@@ -198,7 +199,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 ]),
               ),
               GestureDetector(
-                onTap: () => CustomerNav.goTab(2),
+                onTap: () => openTracking(context, b),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),

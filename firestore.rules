@@ -28,6 +28,14 @@ service cloud.firestore {
         );
     }
 
+    function isAfterBookingParticipant(bookingId) {
+      return signedIn()
+        && (
+          getAfter(/databases/$(database)/documents/bookings/$(bookingId)).data.customerId == request.auth.uid
+          || getAfter(/databases/$(database)/documents/bookings/$(bookingId)).data.providerId == request.auth.uid
+        );
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId)
@@ -60,6 +68,14 @@ service cloud.firestore {
           && request.resource.data.status == resource.data.status
           && request.resource.data.verificationStatus == 'pending_review');
       allow delete: if isAdmin();
+
+      match /services/{serviceId} {
+        allow read: if isAdmin()
+          || (signedIn() && resource.data.active == true)
+          || isOwner(providerId);
+        allow create: if isOwner(providerId);
+        allow update, delete: if isAdmin() || isOwner(providerId);
+      }
     }
 
     match /services/{serviceId} {
@@ -78,6 +94,13 @@ service cloud.firestore {
         || (signedIn() && resource.data.providerId == request.auth.uid);
     }
 
+    match /booking_slots/{slotId} {
+      allow read: if signedIn();
+      // Slot locks are written in the same transaction as their booking.
+      // Booking ownership is enforced by the client transaction and booking rules.
+      allow create, update, delete: if signedIn();
+    }
+
     match /bookings/{bookingId} {
       allow read: if isAdmin()
         || (signedIn()
@@ -94,13 +117,19 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'status', 'cancellationReason', 'cancelledAt', 'paymentStatus',
             'paymentConfirmedByCustomer', 'paymentConfirmedAt', 'reviewId',
-            'reviewSubmitted', 'updatedAt'
+            'reviewSubmitted', 'updatedAt', 'scheduledAt', 'previousScheduledAt',
+            'rescheduledAt', 'acceptedAt', 'cancelReason', 'cancelComments',
+            'cancelledBy', 'customerAttested', 'customerAttestedAt'
           ]))
-        || (signedIn()
-          && resource.data.providerId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'status', 'paymentStatus', 'cashReceivedAt', 'completedAt', 'updatedAt'
-          ]));
+          || (signedIn()
+            && resource.data.providerId == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'providerId', 'providerName', 'declinedBy', 'declinedAt',
+              'acceptedAt', 'stage', 'stageUpdatedAt', 'startedAt', 'checklist',
+              'inspectionNotes', 'photos', 'finishedAt', 'receiptConfirmed',
+              'cashCollectedAt', 'completedAt', 'paymentStatus', 'cashReceivedAt',
+              'updatedAt'
+            ]));
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
@@ -139,7 +168,14 @@ service cloud.firestore {
             'read', 'readAt'
           ]));
       allow create: if isAdmin()
-        || (signedIn() && request.resource.data.userId == request.auth.uid);
+        || (signedIn()
+          && request.resource.data.jobId is string
+          && (
+            (bookingExists(request.resource.data.jobId)
+              && isBookingParticipant(request.resource.data.jobId))
+            || (!bookingExists(request.resource.data.jobId)
+              && isAfterBookingParticipant(request.resource.data.jobId))
+          ));
       allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
   }
