@@ -76,10 +76,14 @@ class _SignupScreenState extends State<SignupScreen> {
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created. You can now log in.')),
-      );
-      context.go('/login');
+      if (_role == SignupRole.servicePartner) {
+        context.go('/provider-onboard/category');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account created. You can now log in.')),
+        );
+        context.go('/login');
+      }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

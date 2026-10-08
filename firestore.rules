@@ -1,0 +1,146 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function bookingExists(bookingId) {
+      return exists(/databases/$(database)/documents/bookings/$(bookingId));
+    }
+
+    function isBookingParticipant(bookingId) {
+      return signedIn()
+        && bookingExists(bookingId)
+        && (
+          get(/databases/$(database)/documents/bookings/$(bookingId)).data.customerId == request.auth.uid
+          || get(/databases/$(database)/documents/bookings/$(bookingId)).data.providerId == request.auth.uid
+        );
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId)
+        && request.resource.data.role in ['customer', 'provider'];
+      allow update: if isOwner(userId)
+        || (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'role', 'status', 'updatedAt'
+        ]));
+      allow delete: if isAdmin();
+    }
+
+    match /providers/{providerId} {
+      allow read: if isAdmin()
+        || isOwner(providerId)
+        || (signedIn() && resource.data.status == 'approved');
+      allow create: if isOwner(providerId);
+      allow update: if isAdmin()
+        || (isOwner(providerId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'email', 'phone', 'category', 'serviceType', 'specialty',
+          'area', 'serviceArea', 'hourlyRate',
+          'yearsExp', 'jobsDone', 'onTime', 'availableToday', 'bio',
+          'availability', 'sameDayEmergency', 'avatarUrl', 'photoUrl',
+          'updatedAt'
+        ]))
+        || (isOwner(providerId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'tradeLicense', 'insuranceDetails', 'backgroundCheckDetails',
+            'submittedAt', 'verificationStatus', 'updatedAt'
+          ])
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.verificationStatus == 'pending_review');
+      allow delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.active == true)
+        || (signedIn() && resource.data.providerId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.providerId == request.auth.uid;
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.providerId == request.auth.uid
+          && request.resource.data.providerId == resource.data.providerId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'title', 'subtitle', 'category', 'price', 'unit', 'active', 'updatedAt'
+          ]));
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.providerId == request.auth.uid);
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isAdmin()
+        || (signedIn()
+          && (resource.data.customerId == request.auth.uid
+            || resource.data.providerId == request.auth.uid));
+      allow create: if signedIn()
+        && request.resource.data.customerId == request.auth.uid
+        && exists(/databases/$(database)/documents/providers/$(request.resource.data.providerId))
+        && get(/databases/$(database)/documents/providers/$(request.resource.data.providerId)).data.status == 'approved'
+        && request.resource.data.status == 'pending';
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.customerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'cancellationReason', 'cancelledAt', 'paymentStatus',
+            'paymentConfirmedByCustomer', 'paymentConfirmedAt', 'reviewId',
+            'reviewSubmitted', 'updatedAt'
+          ]))
+        || (signedIn()
+          && resource.data.providerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'paymentStatus', 'cashReceivedAt', 'completedAt', 'updatedAt'
+          ]));
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || isBookingParticipant(bookingId);
+        allow create: if isBookingParticipant(bookingId)
+          && request.resource.data.senderId == request.auth.uid;
+        allow update: if isAdmin()
+          || (isBookingParticipant(bookingId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'read', 'readAt'
+            ]));
+        allow delete: if isAdmin();
+      }
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && reviewId == request.resource.data.bookingId + '_' + request.auth.uid
+        && request.resource.data.customerId == request.auth.uid
+        && bookingExists(request.resource.data.bookingId)
+        && get(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.customerId == request.auth.uid
+        && get(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.status == 'completed'
+        && request.resource.data.providerId == get(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.providerId
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+      allow update, delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'read', 'readAt'
+          ]));
+      allow create: if isAdmin()
+        || (signedIn() && request.resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+  }
+}
