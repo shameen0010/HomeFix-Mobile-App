@@ -1,8 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../admin/data/models/model_utils.dart';
 import '../../../admin/data/models/service_category.dart';
@@ -59,8 +58,15 @@ class CustomerRepository {
         default:
           throw AdminException(e.message ?? 'Database error (${e.code}).');
       }
-    } catch (_) {
-      throw AdminException('Unexpected error. Please try again.');
+    } catch (e, st) {
+      debugPrint('CustomerRepository error: $e\n$st');
+      final s = e.toString();
+      if (s.contains('AdminException:')) {
+        throw AdminException(s.split('AdminException:').last.trim());
+      }
+      throw AdminException(
+        s.isNotEmpty ? s.replaceFirst('Exception: ', '') : 'Unexpected error. Please try again.',
+      );
     }
   }
 
@@ -275,6 +281,7 @@ class CustomerRepository {
             uploaded.add(r);
             photoDocs.add({'url': await r.getDownloadURL(), 'label': 'Customer photo ${i + 1}'});
           }
+          late PriceQuote finalQuote;
           await _db.runTransaction((tx) async {
             final pSnap = await tx.get(_providers.doc(provider.id));
             final pd = pSnap.data();
@@ -305,6 +312,7 @@ class CustomerRepository {
             }
 
             final quote = emergency ? PriceQuote.emergency(service, fresh) : PriceQuote.scheduled(service);
+            finalQuote = quote;
             final no = (DateTime.now().millisecondsSinceEpoch % 90000 + 10000).toString();
             tx.set(ref, {
               'bookingNo': no,
@@ -343,16 +351,20 @@ class CustomerRepository {
                   },
                   SetOptions(merge: true));
             }
-            tx.set(_notifications.doc(), {
+          });
+          try {
+            await _notifications.add({
               'userId': provider.id,
               'type': emergency ? 'urgent' : 'booking',
               'title': emergency ? 'New Urgent Request nearby!' : 'New booking request',
-              'body': '${service.name} at ${address.trim()}. Estimated cash payout ${formatMoney(quote.total)}.',
+              'body': '${service.name} at ${address.trim()}. Estimated cash payout ${formatMoney(finalQuote.total)}.',
               'jobId': ref.id,
               'read': false,
               'createdAt': FieldValue.serverTimestamp(),
             });
-          });
+          } catch (e) {
+            debugPrint('Failed to send provider notification: $e');
+          }
         } catch (_) {
           for (final r in uploaded) {
             try {
@@ -369,6 +381,8 @@ class CustomerRepository {
   Future<void> rescheduleBooking(String id, DateTime newAt) => _guard(() async {
         final me = _requireUid();
         final ref = _bookings.doc(id);
+        String notifPid = '';
+        Map<String, dynamic> notifData = const {};
         await _db.runTransaction((tx) async {
           final s = await tx.get(ref);
           if (!s.exists) throw AdminException('Booking not found.');
@@ -380,6 +394,8 @@ class CustomerRepository {
           if (d['isEmergency'] == true) throw AdminException('Emergency requests cannot be rescheduled.');
           final pid = asString(d['providerId']);
           if (pid.isEmpty) throw AdminException('Wait until a provider is assigned before rescheduling.');
+          notifPid = pid;
+          notifData = d;
           final oldAt = asDate(d['scheduledAt']);
           final pSnap = await tx.get(_providers.doc(pid));
           if (!pSnap.exists) throw AdminException('This provider is no longer available.');
@@ -421,23 +437,31 @@ class CustomerRepository {
             if (oldAt != null) 'previousScheduledAt': Timestamp.fromDate(oldAt),
             'rescheduledAt': FieldValue.serverTimestamp(),
           });
-          tx.set(_notifications.doc(), {
-            'userId': pid,
-            'type': 'booking',
-            'title': 'Booking rescheduled',
-            'body': '${d['customerName'] ?? 'A customer'} moved ${d['title'] ?? 'a booking'} to '
-                '${formatDate(newAt, 'EEE, MMM d, h:mm a')}. Please accept again.',
-            'jobId': id,
-            'read': false,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
         });
+        if (notifPid.isNotEmpty) {
+          try {
+            await _notifications.add({
+              'userId': notifPid,
+              'type': 'booking',
+              'title': 'Booking rescheduled',
+              'body': '${notifData['customerName'] ?? 'A customer'} moved ${notifData['title'] ?? 'a booking'} to '
+                  '${formatDate(newAt, 'EEE, MMM d, h:mm a')}. Please accept again.',
+              'jobId': id,
+              'read': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          } catch (e) {
+            debugPrint('Failed to send reschedule notification: $e');
+          }
+        }
       });
 
   /// Cancels (pending/confirmed only), releases the provider's slot and notifies them.
   Future<void> cancelBooking(String id, String reason, {String? comments}) => _guard(() async {
         final ref = _bookings.doc(id);
         final me = _requireUid();
+        String notifPid = '';
+        Map<String, dynamic> notifData = const {};
         await _db.runTransaction((tx) async {
           final s = await tx.get(ref);
           if (!s.exists) throw AdminException('Booking not found.');
@@ -447,6 +471,8 @@ class CustomerRepository {
             throw AdminException('This booking can no longer be cancelled (${d['status']}).');
           }
           final pid = asString(d['providerId']);
+          notifPid = pid;
+          notifData = d;
           final at = asDate(d['scheduledAt']);
           final dayRef = (pid.isNotEmpty && at != null && d['isEmergency'] != true)
               ? _slots.doc(slotDayIdOf(pid, at))
@@ -465,18 +491,22 @@ class CustomerRepository {
             final mine = _slotsOf(daySnap)[key];
             if (mine is Map && mine['bookingId'] == id) tx.update(dayRef, {'slots.$key': FieldValue.delete()});
           }
-          if (pid.isNotEmpty) {
-            tx.set(_notifications.doc(), {
-              'userId': pid,
+        });
+        if (notifPid.isNotEmpty) {
+          try {
+            await _notifications.add({
+              'userId': notifPid,
               'type': 'booking',
               'title': 'Booking cancelled',
-              'body': '${d['customerName'] ?? 'The customer'} cancelled ${d['title'] ?? 'a booking'}. Reason: $reason',
+              'body': '${notifData['customerName'] ?? 'The customer'} cancelled ${notifData['title'] ?? 'a booking'}. Reason: $reason',
               'jobId': id,
               'read': false,
               'createdAt': FieldValue.serverTimestamp(),
             });
+          } catch (e) {
+            debugPrint('Failed to send cancel notification: $e');
           }
-        });
+        }
       });
 
   /// Customer side of the dual cash handshake.
@@ -507,6 +537,8 @@ class CustomerRepository {
         final me = _requireUid();
         final bRef = _bookings.doc(bookingId);
         final rRef = _reviews.doc(bookingId);
+        String notifPid = '';
+        String notifCustomer = '';
         await _db.runTransaction((tx) async {
           final b = await tx.get(bRef);
           if (!b.exists) throw AdminException('Booking not found.');
@@ -516,6 +548,8 @@ class CustomerRepository {
           if (bd['reviewed'] == true) throw AdminException('You already reviewed this job.');
           final pid = asString(bd['providerId']);
           if (pid.isEmpty) throw AdminException('No provider is linked to this booking.');
+          notifPid = pid;
+          notifCustomer = asString(bd['customerName'], 'A customer');
           final pRef = _providers.doc(pid);
           final p = await tx.get(pRef);
           final pd = p.data() ?? <String, dynamic>{};
@@ -544,16 +578,22 @@ class CustomerRepository {
               if (tags.isNotEmpty) 'tags': FieldValue.arrayUnion(tags),
             });
           }
-          tx.set(_notifications.doc(), {
-            'userId': pid,
-            'type': 'review',
-            'title': '${rating.toStringAsFixed(0)}-Star Review Received!',
-            'body': comment.trim().isEmpty ? '${bd['customerName']} rated you ${rating.toStringAsFixed(0)} stars.' : comment.trim(),
-            'jobId': bookingId,
-            'read': false,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
         });
+        if (notifPid.isNotEmpty) {
+          try {
+            await _notifications.add({
+              'userId': notifPid,
+              'type': 'review',
+              'title': '${rating.toStringAsFixed(0)}-Star Review Received!',
+              'body': comment.trim().isEmpty ? '$notifCustomer rated you ${rating.toStringAsFixed(0)} stars.' : comment.trim(),
+              'jobId': bookingId,
+              'read': false,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+          } catch (e) {
+            debugPrint('Failed to send review notification: $e');
+          }
+        }
       });
 
   // ------------------------------------------------------------------- chat

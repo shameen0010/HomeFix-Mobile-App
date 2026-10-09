@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, setDoc } = require('firebase/firestore');
+const { doc, setDoc, updateDoc } = require('firebase/firestore');
 
 describe('HomeFix Firestore rules', () => {
   let testEnv;
@@ -56,5 +56,18 @@ describe('HomeFix Firestore rules', () => {
     };
     await assertSucceeds(setDoc(doc(db, 'reviews/booking-1_customer-1'), review));
     await assertFails(setDoc(doc(db, 'reviews/random-id'), review));
+  });
+
+  it('allows a provider to change only their online status', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'providers/provider-1'), {
+        status: 'approved',
+        isOnline: false,
+      });
+    });
+
+    const db = testEnv.authenticatedContext('provider-1').firestore();
+    await assertSucceeds(updateDoc(doc(db, 'providers/provider-1'), { isOnline: true }));
+    await assertFails(updateDoc(doc(db, 'providers/provider-1'), { status: 'suspended' }));
   });
 });
