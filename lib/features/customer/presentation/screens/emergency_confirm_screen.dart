@@ -22,15 +22,22 @@ class EmergencyConfirmScreen extends StatelessWidget {
     final ok = await runAdminAction(
       context,
       () async {
-        id = await _repo.createBooking(
-          provider: provider,
-          service: service,
-          scheduledAt: DateTime.now().add(const Duration(minutes: 30)),
-          address: request.fullAddress,
-          notes: request.problem,
-          emergency: true,
-          photos: request.photos,
-        );
+        id = await _repo
+            .createBooking(
+              provider: provider,
+              service: service,
+              scheduledAt: DateTime.now().add(const Duration(minutes: 30)),
+              address: request.fullAddress,
+              notes: request.problem,
+              emergency: true,
+              photos: request.photos,
+            )
+            .timeout(
+              const Duration(seconds: 30),
+              onTimeout: () => throw AdminException(
+                'Emergency booking is taking too long. Check your internet connection and try again.',
+              ),
+            );
       },
       success: 'Emergency request sent',
     );

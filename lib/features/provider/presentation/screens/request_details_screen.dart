@@ -7,7 +7,6 @@ import '../../core/provider_ui.dart';
 import '../../data/models/job_model.dart';
 import '../../data/repositories/provider_repository.dart';
 import '../widgets/job_actions.dart';
-import '../widgets/job_format.dart';
 import '../widgets/provider_header.dart';
 
 /// Job Details for a pending request (countdown, client, task, photos).

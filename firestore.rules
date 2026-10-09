@@ -58,7 +58,7 @@ service cloud.firestore {
           'area', 'serviceArea', 'hourlyRate',
           'yearsExp', 'jobsDone', 'onTime', 'availableToday', 'bio',
           'availability', 'sameDayEmergency', 'avatarUrl', 'photoUrl',
-          'updatedAt'
+          'updatedAt', 'isOnline'
         ]))
         || (isOwner(providerId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([

@@ -29,14 +29,21 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
     final ok = await runAdminAction(
       context,
       () async {
-        id = await _repo.createBooking(
-          provider: d.provider,
-          service: d.service,
-          scheduledAt: at,
-          address: d.address,
-          notes: d.problem,
-          photos: d.photos,
-        );
+        id = await _repo
+            .createBooking(
+              provider: d.provider,
+              service: d.service,
+              scheduledAt: at,
+              address: d.address,
+              notes: d.problem,
+              photos: d.photos,
+            )
+            .timeout(
+              const Duration(seconds: 30),
+              onTimeout: () => throw AdminException(
+                'Booking is taking too long. Check your internet connection and try again.',
+              ),
+            );
         if (d.saveAddress) {
           try {
             final existing = await _repo.getAddresses();
